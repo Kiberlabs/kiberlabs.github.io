@@ -16,12 +16,12 @@ def test_required_site_files_and_assets_exist() -> None:
 
     # Every local relative src/href to assets/* must exist on disk
     refs = set(re.findall(r'(?:src|href)="(assets/[^"]+)"', html))
-    assert len(refs) == 6  # logo + 5 covers
+    assert len(refs) == 7  # logo + 6 covers
     for rel in refs:
         assert (ROOT / rel).exists(), f"Missing local asset referenced in index.html: {rel}"
 
 
-def test_all_five_public_repos_and_ci_badges_linked() -> None:
+def test_all_six_public_repos_and_ci_badges_linked() -> None:
     html = (ROOT / "index.html").read_text(encoding="utf-8")
     expected_repos = (
         "ecommerce-price-monitor-sieve",
@@ -29,6 +29,7 @@ def test_all_five_public_repos_and_ci_badges_linked() -> None:
         "ai-shortform-video-pipeline",
         "b2b-rag-citation-engine",
         "kiberlabs-automation-api",
+        "b2b-invoice-reconciliation-engine",
     )
     for repo in expected_repos:
         assert f"https://github.com/Kiberlabs/{repo}" in html
