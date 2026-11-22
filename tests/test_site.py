@@ -93,6 +93,23 @@ def test_sow_print_media_rules_present() -> None:
     assert ".sow-sheet" in css
 
 
+def test_conversion_upgrades_tab4_invoice_opengraph_and_sow_bridge() -> None:
+    """Flow: verify Tab 4 Invoice Auditor, invoice estimator track, 7/7 CI badge, OpenGraph tags, and SOW URL query wiring."""
+    index_html = (ROOT / "index.html").read_text(encoding="utf-8")
+    assert 'data-tab="tab-invoice"' in index_html
+    assert 'id="tab-invoice"' in index_html
+    assert '<option value="invoice">' in index_html
+    assert "7 / 7 CI" in index_html
+    assert 'property="og:image"' in index_html
+    assert 'name="twitter:card"' in index_html
+    assert 'id="est-sow-link"' in index_html
+
+    sow_js = (ROOT / "sow.js").read_text(encoding="utf-8")
+    assert "URLSearchParams" in sow_js
+    assert 'urlParams.get("track")' in sow_js
+    assert 'urlParams.get("lang")' in sow_js
+
+
 def test_zero_r3_or_pii_leakage_across_site() -> None:
     """Flow: scan all site HTML, CSS, JS, and JSON files for forbidden private handles or R3 tokens."""
     forbidden = ("xenia", "rosana", "wallapop", "milanuncios", "camoufox", "andre@")

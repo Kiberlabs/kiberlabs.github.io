@@ -607,4 +607,14 @@ document.getElementById("btn-copy-md").addEventListener("click", async () => {
   }
 });
 
+const urlParams = new URLSearchParams(window.location.search);
+const paramLang = urlParams.get("lang");
+const paramTrack = urlParams.get("track");
+if (paramLang === "es" || paramLang === "en") {
+  currentLang = paramLang;
+}
+if (paramTrack && PRESETS[paramTrack]) {
+  document.getElementById("sow-track").value = paramTrack;
+}
+
 applyLang(currentLang);

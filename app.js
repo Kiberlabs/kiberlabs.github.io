@@ -5,6 +5,7 @@
 
 import {
   estimateFixedPriceScope,
+  evaluateInvoice3Way,
   evaluateMarginSieve,
   runGroundedRagQuery,
   stepLeadBotSession,
@@ -35,6 +36,13 @@ const I18N = {
     tab_sieve: "1. Margin Sieve Engine",
     tab_rag: "2. Grounded RAG Verifier",
     tab_bot: "3. 24/7 Lead Bot Simulator",
+    tab_invoice: "4. Invoice 3-Way & IBAN Auditor",
+    lbl_po: "Purchase Order Total (EUR)",
+    lbl_grn: "Goods Receipt (GRN) Total (EUR)",
+    lbl_inv_total: "Billed Invoice Total (EUR)",
+    lbl_iban: "Beneficiary IBAN (MOD-97)",
+    lbl_vendor: "Approved Vendor Master",
+    lbl_dup: "Duplicate Invoice Detected",
     lbl_supplier: "Supplier Cost (EUR)",
     lbl_resale: "Target Resale (EUR)",
     lbl_ship: "Shipping Cost (EUR)",
@@ -62,6 +70,7 @@ const I18N = {
     lbl_docker: "Multi-Stage Docker Container (+$150)",
     lbl_ci: "GitHub Actions CI Matrix (+$100)",
     btn_copy_brief: "Copy Scope Brief for Upwork / LinkedIn",
+    btn_open_sow: "Open Pre-Filled SOW PDF →",
     copied_ok: "Brief Copied to Clipboard!",
   },
   es: {
@@ -88,6 +97,13 @@ const I18N = {
     tab_sieve: "1. Motor de Márgenes",
     tab_rag: "2. Verificador RAG",
     tab_bot: "3. Simulador Bot 24/7",
+    tab_invoice: "4. Auditoría Facturas 3-Vías e IBAN",
+    lbl_po: "Total Pedido Compra / PO (EUR)",
+    lbl_grn: "Total Albarán / GRN (EUR)",
+    lbl_inv_total: "Total Factura Emitida (EUR)",
+    lbl_iban: "IBAN Beneficiario (MOD-97)",
+    lbl_vendor: "Proveedor Aprobado",
+    lbl_dup: "Factura Duplicada Detectada",
     lbl_supplier: "Coste Proveedor (EUR)",
     lbl_resale: "Precio Venta Objetivo (EUR)",
     lbl_ship: "Envío (EUR)",
@@ -115,6 +131,7 @@ const I18N = {
     lbl_docker: "Contenedor Docker Multi-Stage (+$150)",
     lbl_ci: "CI GitHub Actions 3.11/3.12 (+$100)",
     btn_copy_brief: "Copiar Brief para Upwork / LinkedIn",
+    btn_open_sow: "Abrir SOW en PDF Pre-Rellenado →",
     copied_ok: "¡Brief copiado al portapapeles!",
   },
 };
@@ -135,6 +152,7 @@ function applyLang(lang) {
   document.querySelectorAll(".lang-btn").forEach((btn) => {
     btn.classList.toggle("active", btn.dataset.lang === lang);
   });
+  updateSowLink();
 }
 
 document.querySelectorAll(".lang-btn").forEach((btn) => {
@@ -249,8 +267,45 @@ document.querySelectorAll(".bot-preset").forEach((btn) => {
   btn.addEventListener("click", () => sendBotMessage(btn.dataset.msg));
 });
 
-/* 4. Estimator */
+/* 4. Invoice 3-Way & IBAN MOD-97 Auditor */
+function updateInvoice() {
+  const res = evaluateInvoice3Way({
+    poTotal: document.getElementById("inv-po").value,
+    grnTotal: document.getElementById("inv-grn").value,
+    invoiceTotal: document.getElementById("inv-total").value,
+    iban: document.getElementById("inv-iban").value,
+    approvedVendor: document.getElementById("inv-vendor").checked,
+    duplicateInvoice: document.getElementById("inv-dup").checked,
+  });
+  const badge = document.getElementById("inv-badge");
+  badge.textContent = `${res.verdict} · RISK ${res.risk_score}/100`;
+  badge.className = `status-badge ${
+    res.verdict === "PASS" ? "status-ok" : res.verdict === "REVIEW" ? "status-warn" : "status-bad"
+  }`;
+  document.getElementById("inv-json").textContent = JSON.stringify(res, null, 2);
+}
+document.getElementById("invoice-form").addEventListener("input", updateInvoice);
+document.querySelectorAll(".inv-preset").forEach((btn) => {
+  btn.addEventListener("click", () => {
+    document.getElementById("inv-po").value = btn.dataset.po;
+    document.getElementById("inv-grn").value = btn.dataset.grn;
+    document.getElementById("inv-total").value = btn.dataset.inv;
+    document.getElementById("inv-iban").value = btn.dataset.iban;
+    document.getElementById("inv-vendor").checked = btn.dataset.vendor === "1";
+    document.getElementById("inv-dup").checked = btn.dataset.dup === "1";
+    updateInvoice();
+  });
+});
+
+/* 5. Estimator */
 let lastEstimate = null;
+function updateSowLink() {
+  const link = document.getElementById("est-sow-link");
+  const trackEl = document.getElementById("est-track");
+  if (!link || !trackEl) return;
+  link.href = `sow.html?track=${encodeURIComponent(trackEl.value)}&lang=${encodeURIComponent(currentLang)}`;
+}
+
 function updateEstimator() {
   lastEstimate = estimateFixedPriceScope({
     track: document.getElementById("est-track").value,
@@ -267,6 +322,7 @@ function updateEstimator() {
     li.innerHTML = `<span>${m.name}</span><strong>$${m.usd}</strong>`;
     ul.appendChild(li);
   }
+  updateSowLink();
 }
 ["est-track", "est-tier", "est-docker", "est-ci"].forEach((id) => {
   document.getElementById(id).addEventListener("change", updateEstimator);
@@ -295,4 +351,5 @@ applyLang(currentLang);
 updateSieve();
 updateRag();
 renderBotState("init");
+updateInvoice();
 updateEstimator();

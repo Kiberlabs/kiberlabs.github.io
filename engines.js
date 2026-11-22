@@ -252,6 +252,84 @@ export function stepLeadBotSession(session, messageText) {
   return { session: next, intent, reply };
 }
 
+/** Validate an IBAN string using the ISO 13616 MOD-97-10 checksum algorithm. */
+export function validateIbanMod97(iban) {
+  const clean = String(iban || "").replace(/[\s-]+/g, "").toUpperCase();
+  if (!/^[A-Z]{2}\d{2}[A-Z0-9]{11,30}$/.test(clean)) return false;
+  const rearranged = clean.slice(4) + clean.slice(0, 4);
+  let rem = 0;
+  for (const ch of rearranged) {
+    const code = ch.charCodeAt(0);
+    const expanded = code >= 65 && code <= 90 ? String(code - 55) : ch;
+    for (const digit of expanded) {
+      rem = (rem * 10 + Number(digit)) % 97;
+    }
+  }
+  return rem === 1;
+}
+
+/** Deterministic 3-way PO/GRN/Invoice reconciliation mirroring Repo #6 (b2b-invoice-reconciliation-engine). */
+export function evaluateInvoice3Way(input) {
+  const poTotal = Number(input.poTotal) || 0;
+  const grnTotal = Number(input.grnTotal) || 0;
+  const invoiceTotal = Number(input.invoiceTotal) || 0;
+  const iban = String(input.iban || "").trim();
+  const approvedVendor = Boolean(input.approvedVendor);
+  const duplicateInvoice = Boolean(input.duplicateInvoice);
+
+  const ibanValid = validateIbanMod97(iban);
+  if (poTotal <= 0 || grnTotal <= 0 || invoiceTotal <= 0) {
+    return {
+      verdict: "BLOCKED",
+      risk_score: 100,
+      iban_valid: ibanValid,
+      po_variance_pct: 100,
+      grn_variance_pct: 100,
+      triggers: ["invalid_non_positive_amounts"],
+    };
+  }
+
+  const poVariancePct = Number((((invoiceTotal - poTotal) / poTotal) * 100).toFixed(2));
+  const grnVariancePct = Number((((invoiceTotal - grnTotal) / grnTotal) * 100).toFixed(2));
+  const triggers = [];
+  let risk = 0;
+
+  if (duplicateInvoice) {
+    risk += 65;
+    triggers.push("duplicate_invoice_detected");
+  }
+  if (!ibanValid) {
+    risk += 60;
+    triggers.push("invalid_iban_mod97");
+  }
+  if (!approvedVendor) {
+    risk += 30;
+    triggers.push("unapproved_vendor");
+  }
+  if (Math.abs(poVariancePct) > 10) {
+    risk += 40;
+    triggers.push(`po_variance_critical(${poVariancePct}%)`);
+  } else if (Math.abs(poVariancePct) > 3) {
+    risk += 25;
+    triggers.push(`po_price_variance>3%(${poVariancePct}%)`);
+  }
+  if (invoiceTotal > grnTotal * 1.005) {
+    risk += 30;
+    triggers.push(`billed_exceeds_grn(${grnVariancePct}%)`);
+  }
+
+  const riskScore = Math.min(100, risk);
+  const verdict = riskScore >= 60 ? "BLOCKED" : riskScore >= 20 ? "REVIEW" : "PASS";
+  return {
+    verdict,
+    risk_score: riskScore,
+    iban_valid: ibanValid,
+    po_variance_pct: poVariancePct,
+    grn_variance_pct: grnVariancePct,
+    triggers: triggers.length > 0 ? triggers : ["3way_match_verified"],
+  };
+}
+
 /** Fixed-price milestone estimator for B2B clients. */
 export function estimateFixedPriceScope({ track, complexity, includeDocker, includeCi }) {
   const baseMap = {
@@ -260,6 +338,7 @@ export function estimateFixedPriceScope({ track, complexity, includeDocker, incl
     video: { label: "Automated 9:16 FFmpeg & ASS Video Pipeline", usd: 600, days: 4 },
     rag: { label: "Zero-Hallucination B2B RAG & Citation Engine", usd: 500, days: 4 },
     api: { label: "Production FastAPI + Auth + Rate-Limit Gateway", usd: 700, days: 5 },
+    invoice: { label: "B2B 3-Way Invoice Reconciliation & Hash Ledger", usd: 750, days: 5 },
   };
   const multMap = { mvp: 1.0, production: 1.45, enterprise: 2.0 };
   const base = baseMap[track] || baseMap.api;

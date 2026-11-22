@@ -1,9 +1,11 @@
 import assert from "node:assert/strict";
 import {
   estimateFixedPriceScope,
+  evaluateInvoice3Way,
   evaluateMarginSieve,
   runGroundedRagQuery,
   stepLeadBotSession,
+  validateIbanMod97,
 } from "../engines.js";
 
 // 1. Margin sieve approves healthy EU SKU and blocks low-margin / non-EU
@@ -62,7 +64,55 @@ const spamTurn = stepLeadBotSession(
 assert.equal(spamTurn.session.state, "spam_blocked");
 assert.equal(spamTurn.reply, null);
 
-// 4. Scope estimator sums milestones cleanly
+// 4. Invoice 3-way reconciliation & IBAN MOD-97 checksum
+assert.equal(validateIbanMod97("ES91 2100 0418 4502 0005 1332"), true);
+assert.equal(validateIbanMod97("ES00 2100 0418 4502 0005 1332"), false);
+
+const invPass = evaluateInvoice3Way({
+  poTotal: 1250,
+  grnTotal: 1250,
+  invoiceTotal: 1250,
+  iban: "ES9121000418450200051332",
+  approvedVendor: true,
+  duplicateInvoice: false,
+});
+assert.equal(invPass.verdict, "PASS");
+assert.equal(invPass.risk_score, 0);
+assert.equal(invPass.iban_valid, true);
+
+const invReview = evaluateInvoice3Way({
+  poTotal: 1000,
+  grnTotal: 1050,
+  invoiceTotal: 1050,
+  iban: "ES9121000418450200051332",
+  approvedVendor: true,
+  duplicateInvoice: false,
+});
+assert.equal(invReview.verdict, "REVIEW");
+assert.ok(invReview.risk_score >= 20 && invReview.risk_score < 60);
+
+const invBadIban = evaluateInvoice3Way({
+  poTotal: 1250,
+  grnTotal: 1250,
+  invoiceTotal: 1250,
+  iban: "ES0021000418450200051332",
+  approvedVendor: true,
+  duplicateInvoice: false,
+});
+assert.equal(invBadIban.verdict, "BLOCKED");
+assert.equal(invBadIban.iban_valid, false);
+
+const invDup = evaluateInvoice3Way({
+  poTotal: 1250,
+  grnTotal: 1250,
+  invoiceTotal: 1250,
+  iban: "ES9121000418450200051332",
+  approvedVendor: true,
+  duplicateInvoice: true,
+});
+assert.equal(invDup.verdict, "BLOCKED");
+
+// 5. Scope estimator sums milestones cleanly (including invoice track)
 const est = estimateFixedPriceScope({
   track: "api",
   complexity: "production",
@@ -70,4 +120,12 @@ const est = estimateFixedPriceScope({
   includeCi: true,
 });
 assert.equal(est.milestones[0].usd + est.milestones[1].usd, est.totalUsd);
-console.log("JS_ENGINES_OK", { okScore: okSku.score, ragHits: ragEn.citations.length, estUsd: est.totalUsd });
+const estInv = estimateFixedPriceScope({
+  track: "invoice",
+  complexity: "mvp",
+  includeDocker: false,
+  includeCi: true,
+});
+assert.equal(estInv.milestones[0].usd + estInv.milestones[1].usd, estInv.totalUsd);
+assert.match(estInv.trackLabel, /Invoice/i);
+console.log("JS_ENGINES_OK", { okScore: okSku.score, ragHits: ragEn.citations.length, invPass: invPass.verdict, estUsd: est.totalUsd });
