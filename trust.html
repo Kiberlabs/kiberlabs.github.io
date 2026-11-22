@@ -1,0 +1,181 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Trust, Security &amp; Delivery Center — KiberLabs</title>
+  <meta name="description" content="KiberLabs B2B Trust Center: GDPR-ready data isolation, zero-AI-training commitment, Senior Tech Lead QA protocol, 100% client IP ownership, and Public Architecture Decision Records (ADRs)." />
+  <link rel="icon" type="image/jpeg" href="assets/kiberlabs_logo_oficial.jpg" />
+  <link rel="stylesheet" href="styles.css" />
+</head>
+<body>
+  <header class="topbar">
+    <div class="container topbar-inner">
+      <a href="index.html" class="brand">
+        <img src="assets/kiberlabs_logo_oficial.jpg" alt="KiberLabs Logo" />
+        <span>KiberLabs</span>
+      </a>
+      <nav class="nav-links">
+        <a href="index.html#sandbox" data-i18n="nav_sandbox">Live Sandbox</a>
+        <a href="index.html#portfolio" data-i18n="nav_portfolio">Engines</a>
+        <a href="benchmarks.html" data-i18n="nav_benchmarks">Benchmarks</a>
+        <a href="trust.html" class="active" data-i18n="nav_trust">Trust Center</a>
+        <a href="sow.html" data-i18n="nav_sow">SOW PDF</a>
+        <a href="https://github.com/Kiberlabs" target="_blank" rel="noopener">GitHub</a>
+      </nav>
+      <div class="lang-toggle" role="group" aria-label="Language switcher">
+        <button class="lang-btn active" data-lang="en" type="button">EN</button>
+        <button class="lang-btn" data-lang="es" type="button">ES</button>
+      </div>
+    </div>
+  </header>
+
+  <main>
+    <section class="subhero">
+      <div class="container">
+        <div class="pill">
+          <span class="dot"></span>
+          <span data-i18n="tr_pill">EU-Ready B2B Governance · Transparent Architecture</span>
+        </div>
+        <h1 data-i18n="tr_title">Trust, Security &amp; <span class="gradient-text">Engineering Delivery</span> Center</h1>
+        <p class="lead" data-i18n="tr_lead">
+          How KiberLabs protects client data, eliminates hallucination &amp; lock-in risk, and enforces Senior Tech Lead QA verification on every fixed-price milestone.
+        </p>
+        <div class="cta-row">
+          <a href="benchmarks.html" class="btn btn-primary" data-i18n="tr_btn_bench">Verify 100+ Red-Team Benchmarks</a>
+          <a href="sow.html" class="btn btn-secondary" data-i18n="tr_btn_sow">Generate Fixed-Price SOW PDF</a>
+        </div>
+      </div>
+    </section>
+
+    <section id="guarantees">
+      <div class="container">
+        <div class="section-head">
+          <h2 data-i18n="sec_guar_title">4 Non-Negotiable B2B Delivery Guarantees</h2>
+          <p data-i18n="sec_guar_desc">Built directly into every Statement of Work and verified in CI before final handoff.</p>
+        </div>
+        <div class="cards-grid-2">
+          <article class="trust-card">
+            <span class="status-badge status-ok">GDPR-READY</span>
+            <h3 data-i18n="g1_title">1. Strict Data Isolation &amp; EU-First Storage</h3>
+            <p data-i18n="g1_desc">All pipelines run on client-owned infrastructure (local SQLite WAL, private PostgreSQL, or EU VPC containers). Zero third-party telemetry, zero hidden SaaS retention, and explicit environment-variable secret hygiene (.env excluded from Git).</p>
+          </article>
+          <article class="trust-card">
+            <span class="status-badge status-ok">ZERO TRAINING</span>
+            <h3 data-i18n="g2_title">2. Zero-AI-Training &amp; Zero-Token Core Default</h3>
+            <p data-i18n="g2_desc">Client payloads, invoices, and legal documents are never submitted to public AI training pools. Up to 95% of filtering, routing, and citation checks execute deterministically in local Python with $0 external LLM API calls.</p>
+          </article>
+          <article class="trust-card">
+            <span class="status-badge status-ok">SENIOR QA GATE</span>
+            <h3 data-i18n="g3_title">3. Senior Tech Lead Review &amp; Automated CI</h3>
+            <p data-i18n="g3_desc">Every deliverable passes a two-step gate before milestone sign-off: automated pytest + boundary security checks across Python 3.11 &amp; 3.12 in GitHub Actions, plus code architecture and flow-docstring review by our Senior Tech Lead &amp; QA.</p>
+          </article>
+          <article class="trust-card">
+            <span class="status-badge status-ok">100% CLIENT IP</span>
+            <h3 data-i18n="g4_title">4. Full Intellectual Property Ownership</h3>
+            <p data-i18n="g4_desc">Upon milestone payment, the client owns 100% of custom source code, Dockerfiles, database schemas, and tests. Zero proprietary runtime wrappers, zero recurring license tax, and complete operator README handoff.</p>
+          </article>
+        </div>
+      </div>
+    </section>
+
+    <section id="adrs">
+      <div class="container">
+        <div class="section-head">
+          <h2 data-i18n="sec_adr_title">Public Architecture Decision Records (ADRs)</h2>
+          <p data-i18n="sec_adr_desc">The four core engineering decisions behind KiberLabs' reliability, low operational cost, and fast fixed-price turnaround.</p>
+        </div>
+        <div class="cards-grid-2">
+          <article class="adr-card">
+            <div class="adr-header">
+              <h3>ADR-001 · SQLite WAL + busy_timeout=5000</h3>
+              <span class="status-badge status-ok">ACCEPTED</span>
+            </div>
+            <ul class="adr-points">
+              <li><strong data-i18n="adr_ctx">Context:</strong> <span data-i18n="adr1_ctx">Concurrent webhook workers and scrapers frequently crash default SQLite rollback journals with <code>database is locked</code> errors.</span></li>
+              <li><strong data-i18n="adr_dec">Decision:</strong> <span data-i18n="adr1_dec">Enforce <code>PRAGMA journal_mode=WAL</code>, <code>synchronous=NORMAL</code>, and <code>busy_timeout=5000+</code> across all single-node engines, with clean repository interfaces for PostgreSQL migration when multi-region scale is required.</span></li>
+              <li><strong data-i18n="adr_ver">Verification:</strong> <span data-i18n="adr1_ver">50-thread simultaneous read/write stress test passes with 0 lock errors in <code>kiberlabs-benchmarks</code>.</span></li>
+            </ul>
+          </article>
+
+          <article class="adr-card">
+            <div class="adr-header">
+              <h3>ADR-002 · Zero-Token Deterministic Sieving</h3>
+              <span class="status-badge status-ok">ACCEPTED</span>
+            </div>
+            <ul class="adr-points">
+              <li><strong data-i18n="adr_ctx">Context:</strong> <span data-i18n="adr2_ctx">Routing raw catalog scrapes, spam webhooks, or noisy OCR records straight into LLMs wastes 85–95% of token spend and introduces non-deterministic failures.</span></li>
+              <li><strong data-i18n="adr_dec">Decision:</strong> <span data-i18n="adr2_dec">Place strict Python / Pydantic v2 deterministic sieves (margin math, IBAN MOD-97, regex NLU, SLA gates) ahead of any optional AI step.</span></li>
+              <li><strong data-i18n="adr_ver">Verification:</strong> <span data-i18n="adr2_ver">Processes 38,000+ SKUs/sec and 70,000+ NLU turns/sec locally at $0.00 API token cost.</span></li>
+            </ul>
+          </article>
+
+          <article class="adr-card">
+            <div class="adr-header">
+              <h3>ADR-003 · Non-Root Docker &amp; Hardened Boundaries</h3>
+              <span class="status-badge status-ok">ACCEPTED</span>
+            </div>
+            <ul class="adr-points">
+              <li><strong data-i18n="adr_ctx">Context:</strong> <span data-i18n="adr3_ctx">Internet-facing scrapers, file processors, and FastAPI webhooks are prime targets for SSRF metadata theft, path traversal, and webhook replay floods.</span></li>
+              <li><strong data-i18n="adr_dec">Decision:</strong> <span data-i18n="adr3_dec">Ship multi-stage non-root Docker images backed by constant-time HMAC <code>X-API-Key</code> auth, sliding-window rate limits, private/metadata IP rejection, and atomic replay deduplication.</span></li>
+              <li><strong data-i18n="adr_ver">Verification:</strong> <span data-i18n="adr3_ver">100% block rate across 112 real Red-Team payloads in automated CI.</span></li>
+            </ul>
+          </article>
+
+          <article class="adr-card">
+            <div class="adr-header">
+              <h3>ADR-004 · Grounded FTS5 BM25 RAG &amp; Abstention</h3>
+              <span class="status-badge status-ok">ACCEPTED</span>
+            </div>
+            <ul class="adr-points">
+              <li><strong data-i18n="adr_ctx">Context:</strong> <span data-i18n="adr4_ctx">Vector-only RAG pipelines frequently hallucinate legal clauses, skip exact article IDs, and require expensive managed vector databases.</span></li>
+              <li><strong data-i18n="adr_dec">Decision:</strong> <span data-i18n="adr4_dec">Use article-aware chunking with SHA-256 content hashes, SQLite FTS5 BM25 retrieval with strict query sanitization, and mandatory <code>INSUFFICIENT_EVIDENCE</code> abstention when grounding fails.</span></li>
+              <li><strong data-i18n="adr_ver">Verification:</strong> <span data-i18n="adr4_ver">Sub-millisecond p50 retrieval with verifiable verbatim citations and zero FTS5 operator injection bypasses.</span></li>
+            </ul>
+          </article>
+        </div>
+      </div>
+    </section>
+
+    <section id="protocol">
+      <div class="container">
+        <div class="panel-card">
+          <div class="bench-head" style="margin-bottom:10px;">
+            <h2 style="margin:0;font-size:1.35rem;" data-i18n="sec_proto_title">Standard 4-Step Fixed-Price Delivery Protocol</h2>
+            <span class="status-badge status-ok">2–7 DAYS</span>
+          </div>
+          <div class="cards-grid-3" style="margin-top:14px;">
+            <div class="metric-card">
+              <strong style="font-size:1.05rem;color:var(--cyan);">01 · Scope &amp; SOW</strong>
+              <span data-i18n="p_s1">Written fixed-price milestones, explicit acceptance criteria, and out-of-scope boundaries signed before coding starts.</span>
+            </div>
+            <div class="metric-card">
+              <strong style="font-size:1.05rem;color:var(--cyan);">02 · Core + Guards</strong>
+              <span data-i18n="p_s2">Typed Python 3.11+ engine, SQLite WAL / Postgres schema, boundary security guards, and reproducible unit + integration pytest suite.</span>
+            </div>
+            <div class="metric-card">
+              <strong style="font-size:1.05rem;color:var(--cyan);">03 · Senior QA &amp; Handoff</strong>
+              <span data-i18n="p_s3">Senior Tech Lead review, green GitHub Actions CI badge, Docker image, and full 100% IP source handoff.</span>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+  </main>
+
+  <footer>
+    <div class="container">
+      <p><strong>KiberLabs Engineering</strong> · Spain · Fixed-Price Python 3.11+ &amp; AI Automation Studio</p>
+      <p>
+        <a href="index.html">Home</a> ·
+        <a href="benchmarks.html">Benchmarks</a> ·
+        <a href="trust.html">Trust Center</a> ·
+        <a href="sow.html">SOW PDF</a> ·
+        <a href="https://github.com/Kiberlabs" target="_blank" rel="noopener">github.com/Kiberlabs</a>
+      </p>
+    </div>
+  </footer>
+
+  <script type="module" src="trust.js"></script>
+</body>
+</html>

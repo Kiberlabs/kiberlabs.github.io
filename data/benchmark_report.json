@@ -1,0 +1,190 @@
+{
+  "schema_version": "1.0",
+  "benchmark_suite_version": "0.1.0",
+  "environment": {
+    "timestamp_utc": "2026-11-22T11:53:59Z",
+    "python_version": "3.15.2",
+    "platform": "Windows 11 (AMD64)",
+    "cpu_count": 12
+  },
+  "benchmarks": [
+    {
+      "id": "margin_sieve",
+      "name": "Margin Sieve (3-Stage Deterministic Filter)",
+      "unit": "SKUs/sec",
+      "operations": 10000,
+      "wall_ms": 259.5,
+      "ops_per_sec": 38535.9,
+      "min_ms": 0.0196,
+      "p50_ms": 0.0224,
+      "p95_ms": 0.0376,
+      "p99_ms": 0.0511,
+      "max_ms": 0.2613,
+      "details": {
+        "approved": 2360,
+        "rejected": 7640,
+        "llm_tokens_used": 0
+      }
+    },
+    {
+      "id": "lead_bot_nlu",
+      "name": "Lead Bot Bilingual NLU + WAL Dedup",
+      "unit": "msgs/sec",
+      "operations": 2000,
+      "wall_ms": 27.06,
+      "ops_per_sec": 73912.8,
+      "min_ms": 0.0028,
+      "p50_ms": 0.0116,
+      "p95_ms": 0.0176,
+      "p99_ms": 0.0928,
+      "max_ms": 0.4799,
+      "details": {
+        "qualified": 1600,
+        "spam_blocked": 400,
+        "llm_tokens_used": 0
+      }
+    },
+    {
+      "id": "rag_fts5_bm25",
+      "name": "Grounded RAG SQLite FTS5 BM25",
+      "unit": "queries/sec",
+      "operations": 1000,
+      "wall_ms": 149.89,
+      "ops_per_sec": 6671.6,
+      "min_ms": 0.0454,
+      "p50_ms": 0.1577,
+      "p95_ms": 0.2396,
+      "p99_ms": 0.2687,
+      "max_ms": 0.5008,
+      "details": {
+        "corpus_articles": 200,
+        "grounded": 800,
+        "abstained": 200
+      }
+    },
+    {
+      "id": "gateway_auth_ratelimit",
+      "name": "FastAPI Gateway HMAC Auth + Rate Limit",
+      "unit": "reqs/sec",
+      "operations": 2000,
+      "wall_ms": 2.62,
+      "ops_per_sec": 763883.6,
+      "min_ms": 0.0002,
+      "p50_ms": 0.0007,
+      "p95_ms": 0.001,
+      "p99_ms": 0.0014,
+      "max_ms": 0.0076,
+      "details": {
+        "allowed": 1500,
+        "throttled": 400,
+        "unauthorized": 100
+      }
+    },
+    {
+      "id": "sqlite_wal_concurrency",
+      "name": "SQLite WAL 50-Thread Concurrency",
+      "unit": "ops/sec",
+      "operations": 2000,
+      "wall_ms": 6685.0,
+      "ops_per_sec": 299.2,
+      "min_ms": 0.0218,
+      "p50_ms": 0.0619,
+      "p95_ms": 0.2541,
+      "p99_ms": 3222.1865,
+      "max_ms": 6020.3012,
+      "details": {
+        "concurrent_threads": 50,
+        "ops_per_thread": 40,
+        "writes_committed": 1000,
+        "reads_completed": 1000,
+        "persisted_rows": 1000,
+        "journal_mode": "WAL",
+        "lock_errors": 0
+      }
+    }
+  ],
+  "redteam": {
+    "total_payloads": 112,
+    "blocked_count": 112,
+    "bypassed_count": 0,
+    "block_rate_pct": 100.0,
+    "duration_ms": 712.835,
+    "categories": [
+      {
+        "id": "ssrf",
+        "name": "SSRF & Cloud Metadata",
+        "total": 27,
+        "blocked": 27,
+        "bypassed": 0,
+        "block_rate_pct": 100.0,
+        "duration_ms": 0.944,
+        "samples": [
+          "http://169.254.169.254/latest/meta-data/",
+          "http://169.254.169.254/computeMetadata/v1/",
+          "http://169.254.170.2/v2/credentials",
+          "http://metadata.google.internal/computeMetadata/v1/"
+        ]
+      },
+      {
+        "id": "path_shell",
+        "name": "Path Traversal & Shell Injection",
+        "total": 22,
+        "blocked": 22,
+        "bypassed": 0,
+        "block_rate_pct": 100.0,
+        "duration_ms": 1.474,
+        "samples": [
+          "'../../etc/passwd'",
+          "'..\\\\..\\\\..\\\\windows\\\\system32\\\\config\\\\sam'",
+          "'%2e%2e/%2e%2e/etc/shadow'",
+          "'..%5c..%5cboot.ini'"
+        ]
+      },
+      {
+        "id": "fts5_sqli",
+        "name": "FTS5 & SQL Injection",
+        "total": 22,
+        "blocked": 22,
+        "bypassed": 0,
+        "block_rate_pct": 100.0,
+        "duration_ms": 0.029,
+        "samples": [
+          "' OR '1'='1",
+          "\"; DROP TABLE docs; --",
+          "1 UNION SELECT sql FROM sqlite_master --",
+          "title:secret OR body:*"
+        ]
+      },
+      {
+        "id": "webhook_replay",
+        "name": "Webhook Replay & HMAC Storms",
+        "total": 21,
+        "blocked": 21,
+        "bypassed": 0,
+        "block_rate_pct": 100.0,
+        "duration_ms": 710.25,
+        "samples": [
+          "duplicate event_id=evt_seed_001 (x8)",
+          "expired timestamp (now - 301s)",
+          "future skew (now + 3600s)",
+          "tampered body with reused HMAC sig"
+        ]
+      },
+      {
+        "id": "malformed_inputs",
+        "name": "Invalid & Malformed Boundary Inputs",
+        "total": 20,
+        "blocked": 20,
+        "bypassed": 0,
+        "block_rate_pct": 100.0,
+        "duration_ms": 0.103,
+        "samples": [
+          "nan_supplier_price",
+          "pos_inf_resale",
+          "neg_inf_shipping",
+          "negative_supplier_price"
+        ]
+      }
+    ]
+  }
+}
