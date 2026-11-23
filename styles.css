@@ -129,7 +129,38 @@ a:hover {
 
 /* Hero */
 .hero {
-  padding: 72px 0 48px;
+  padding: 58px 0 44px;
+}
+
+.hero-grid {
+  display: grid;
+  grid-template-columns: minmax(0, 1.35fr) minmax(260px, 340px);
+  gap: 34px;
+  align-items: center;
+  margin-bottom: 34px;
+}
+
+.hero-copy .cta-row {
+  margin-bottom: 0;
+}
+
+.hero-emblem {
+  width: 100%;
+  max-width: 340px;
+  aspect-ratio: 1 / 1;
+  justify-self: center;
+  border-radius: 20px;
+  overflow: hidden;
+  border: 1px solid var(--border-strong);
+  background: #060a1f;
+  box-shadow: 0 22px 54px rgba(0, 229, 255, 0.14), var(--shadow);
+}
+
+.hero-emblem iframe {
+  width: 100%;
+  height: 100%;
+  border: 0;
+  display: block;
 }
 
 .pill {
@@ -954,10 +985,14 @@ footer {
 }
 
 @media (max-width: 960px) {
+  .hero-grid,
   .tab-panel.active,
   .estimator-grid,
   .sow-layout {
     grid-template-columns: 1fr;
+  }
+  .hero-emblem {
+    max-width: 280px;
   }
   .topbar-inner {
     flex-wrap: wrap;

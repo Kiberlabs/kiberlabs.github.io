@@ -31,7 +31,19 @@ def test_required_site_files_and_assets_exist() -> None:
             assert (ROOT / rel).exists(), f"Missing local asset referenced in {page}: {rel}"
 
     index_refs = set(re.findall(r'(?:src|href)="(assets/[^"]+)"', (ROOT / "index.html").read_text(encoding="utf-8")))
-    assert len(index_refs) == 7  # logo + 6 covers
+    assert len(index_refs) == 8  # logo + 6 covers + animated hero logo
+
+
+def test_animated_hero_logo_asset_is_self_contained_and_accessible() -> None:
+    """Flow: verify assets/kiberlabs_hero_logo.html is referenced in index.html, offline-only, and honors reduced-motion."""
+    index_html = (ROOT / "index.html").read_text(encoding="utf-8")
+    assert 'src="assets/kiberlabs_hero_logo.html"' in index_html
+
+    logo_path = ROOT / "assets" / "kiberlabs_hero_logo.html"
+    assert logo_path.exists()
+    content = logo_path.read_text(encoding="utf-8")
+    assert "prefers-reduced-motion" in content
+    assert "http://" not in content and "https://" not in content
 
 
 def test_all_public_repos_and_ci_badges_linked() -> None:
@@ -112,8 +124,8 @@ def test_conversion_upgrades_tab4_invoice_opengraph_and_sow_bridge() -> None:
 
 def test_zero_r3_or_pii_leakage_across_site() -> None:
     """Flow: scan all site HTML, CSS, JS, and JSON files for forbidden private handles or R3 tokens."""
-    forbidden = ("xenia", "rosana", "wallapop", "milanuncios", "camoufox", "andre@")
-    files = (*HTML_PAGES, "styles.css", *JS_MODULES, "data/benchmark_report.json")
+    forbidden = ("xenia", "rosana", "wallapop", "milanuncios", "camoufox", "andre@", "@gmail.com")
+    files = (*HTML_PAGES, "styles.css", *JS_MODULES, "data/benchmark_report.json", "assets/kiberlabs_hero_logo.html")
     for fname in files:
         content = (ROOT / fname).read_text(encoding="utf-8").lower()
         for bad in forbidden:
