@@ -36,6 +36,12 @@ const I18N = {
     copied_ok: "Copied to Clipboard!",
     btn_go_trust: "Read Trust & Public ADRs →",
     btn_go_sow: "Generate Fixed-Price SOW PDF →",
+    skip_link: "Skip to main content",
+    kpi_env_sub: "Measured Runtime Environment",
+    loading_bench: "Loading measured benchmark artifact...",
+    loading_badge: "LOADING...",
+    loading_rt: "Loading Red-Team matrix...",
+    copy_cli_prompt: "Copy CLI commands:",
   },
   es: {
     nav_sandbox: "Demo Interactiva",
@@ -68,22 +74,46 @@ const I18N = {
     copied_ok: "¡Copiado al portapapeles!",
     btn_go_trust: "Ver Trust Center y ADRs →",
     btn_go_sow: "Generar SOW en PDF →",
+    skip_link: "Saltar al contenido principal",
+    kpi_env_sub: "Entorno de Ejecución Medido",
+    loading_bench: "Cargando artefacto de benchmarks medidos...",
+    loading_badge: "CARGANDO...",
+    loading_rt: "Cargando matriz Red-Team...",
+    copy_cli_prompt: "Copia los comandos CLI:",
   },
 };
 
-let currentLang = localStorage.getItem("kl_lang") === "es" ? "es" : "en";
+function safeGetLang() {
+  try {
+    return localStorage.getItem("kl_lang") === "es" ? "es" : "en";
+  } catch {
+    return "en";
+  }
+}
+
+function safeSetLang(lang) {
+  try {
+    localStorage.setItem("kl_lang", lang);
+  } catch {
+    /* ignore storage restrictions */
+  }
+}
+
+let currentLang = safeGetLang();
+let lastReport = null;
 
 function escapeHtml(str) {
   return String(str)
     .replaceAll("&", "&amp;")
     .replaceAll("<", "&lt;")
     .replaceAll(">", "&gt;")
-    .replaceAll('"', "&quot;");
+    .replaceAll('"', "&quot;")
+    .replaceAll("'", "&#39;");
 }
 
 function applyLang(lang) {
   currentLang = lang;
-  localStorage.setItem("kl_lang", lang);
+  safeSetLang(lang);
   document.documentElement.lang = lang;
   const dict = I18N[lang];
   document.querySelectorAll("[data-i18n]").forEach((el) => {
@@ -93,8 +123,11 @@ function applyLang(lang) {
     else el.textContent = dict[key];
   });
   document.querySelectorAll(".lang-btn").forEach((btn) => {
-    btn.classList.toggle("active", btn.dataset.lang === lang);
+    const active = btn.dataset.lang === lang;
+    btn.classList.toggle("active", active);
+    btn.setAttribute("aria-pressed", String(active));
   });
+  if (lastReport) renderReport(lastReport);
 }
 
 document.querySelectorAll(".lang-btn").forEach((btn) => {
@@ -110,17 +143,22 @@ function fmtNum(n, digits = 0) {
 
 async function loadBenchmarks() {
   try {
-    const res = await fetch("./data/benchmark_report.json", { cache: "no-store" });
+    const res = await fetch("./data/benchmark_report.json");
     if (!res.ok) throw new Error(`HTTP ${res.status}`);
     const data = await res.json();
     renderReport(data);
   } catch (err) {
+    const errTitle = currentLang === "es" ? "ERROR DE CARGA" : "LOAD ERROR";
+    const errMsg = currentLang === "es"
+      ? `No se pudo obtener data/benchmark_report.json (${escapeHtml(err.message)}).`
+      : `Unable to fetch data/benchmark_report.json (${escapeHtml(err.message)}).`;
     document.getElementById("bench-cards").innerHTML =
-      `<div class="panel-card"><span class="status-badge status-bad">LOAD ERROR</span><p style="margin-top:8px;color:var(--muted);">Unable to fetch data/benchmark_report.json (${escapeHtml(err.message)}).</p></div>`;
+      `<div class="panel-card"><span class="status-badge status-bad">${errTitle}</span><p style="margin-top:8px;color:var(--muted);">${errMsg}</p></div>`;
   }
 }
 
 function renderReport(report) {
+  lastReport = report;
   const { environment: env, benchmarks, redteam } = report;
   const sieve = benchmarks.find((b) => b.id === "margin_sieve");
   const wal = benchmarks.find((b) => b.id === "sqlite_wal_concurrency");
@@ -129,7 +167,8 @@ function renderReport(report) {
     document.getElementById("kpi-sieve").textContent = `${fmtNum(sieve.ops_per_sec, 0)} /s`;
   }
   if (wal) {
-    document.getElementById("kpi-wal").textContent = `${wal.details.lock_errors} Locks`;
+    const lockWord = currentLang === "es" ? "Bloqueos" : "Locks";
+    document.getElementById("kpi-wal").textContent = `${wal.details.lock_errors} ${lockWord}`;
   }
   document.getElementById("kpi-rt").textContent = `${redteam.blocked_count}/${redteam.total_payloads} (${redteam.block_rate_pct}%)`;
   document.getElementById("kpi-runtime").textContent = `Py ${env.python_version}`;
@@ -166,9 +205,12 @@ function renderReport(report) {
     const ok = wd.lock_errors === 0;
     const badge = document.getElementById("wal-badge");
     badge.className = `status-badge ${ok ? "status-ok" : "status-bad"}`;
-    badge.textContent = ok ? "0 LOCK ERRORS · VERIFIED" : `${wd.lock_errors} LOCK ERRORS`;
-    document.getElementById("wal-summary").textContent =
-      `${wd.concurrent_threads} concurrent worker threads executed ${fmtNum(wd.writes_committed)} SQLite INSERT commits and ${fmtNum(wd.reads_completed)} SELECT queries simultaneously in ${wd.journal_mode} mode with busy_timeout=10000ms. Final row audit confirmed ${fmtNum(wd.persisted_rows)} persisted rows and ${wd.lock_errors} database-is-locked errors.`;
+    badge.textContent = ok
+      ? (currentLang === "es" ? "0 ERRORES DE BLOQUEO · VERIFICADO" : "0 LOCK ERRORS · VERIFIED")
+      : `${wd.lock_errors} ${currentLang === "es" ? "ERRORES DE BLOQUEO" : "LOCK ERRORS"}`;
+    document.getElementById("wal-summary").textContent = currentLang === "es"
+      ? `${wd.concurrent_threads} hilos concurrentes ejecutaron ${fmtNum(wd.writes_committed)} commits INSERT y ${fmtNum(wd.reads_completed)} lecturas SELECT simultáneas en modo ${wd.journal_mode} con busy_timeout=10000ms. La auditoría final confirmó ${fmtNum(wd.persisted_rows)} filas persistidas y ${wd.lock_errors} errores de bloqueo.`
+      : `${wd.concurrent_threads} concurrent worker threads executed ${fmtNum(wd.writes_committed)} SQLite INSERT commits and ${fmtNum(wd.reads_completed)} SELECT queries simultaneously in ${wd.journal_mode} mode with busy_timeout=10000ms. Final row audit confirmed ${fmtNum(wd.persisted_rows)} persisted rows and ${wd.lock_errors} database-is-locked errors.`;
     document.getElementById("wal-pills").innerHTML = `
       <span>threads: <strong>${wd.concurrent_threads}</strong></span>
       <span>journal_mode: <strong>${escapeHtml(wd.journal_mode)}</strong></span>
@@ -208,7 +250,7 @@ document.getElementById("btn-copy-cli").addEventListener("click", async () => {
     }, 1800);
   } catch {
     // Fallback if clipboard API blocked on file://
-    window.prompt("Copy CLI commands:", txt);
+    window.prompt(I18N[currentLang].copy_cli_prompt, txt);
   }
 });
 

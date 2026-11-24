@@ -34,7 +34,7 @@ const I18N = {
     adr1_ver: "50-thread simultaneous read/write stress test passes with 0 lock errors in kiberlabs-benchmarks.",
     adr2_ctx: "Routing raw catalog scrapes, spam webhooks, or noisy OCR records straight into LLMs wastes 85–95% of token spend and introduces non-deterministic failures.",
     adr2_dec: "Place strict Python / Pydantic v2 deterministic sieves (margin math, IBAN MOD-97, regex NLU, SLA gates) ahead of any optional AI step.",
-    adr2_ver: "Processes tens of thousands of SKUs/sec and NLU turns/sec locally at $0.00 API token cost.",
+    adr2_ver: "Processes 35,000+ SKUs/sec and 65,000+ NLU turns/sec locally at $0.00 API token cost.",
     adr3_ctx: "Internet-facing scrapers, file processors, and FastAPI webhooks are prime targets for SSRF metadata theft, path traversal, and webhook replay floods.",
     adr3_dec: "Ship multi-stage non-root Docker images backed by constant-time HMAC X-API-Key auth, sliding-window rate limits, private/metadata IP rejection, and atomic replay deduplication.",
     adr3_ver: "100% block rate across 112 real Red-Team payloads in automated CI.",
@@ -45,6 +45,7 @@ const I18N = {
     p_s1: "Written fixed-price milestones, explicit acceptance criteria, and out-of-scope boundaries signed before coding starts.",
     p_s2: "Typed Python 3.11+ engine, SQLite WAL / Postgres schema, boundary security guards, and reproducible unit + integration pytest suite.",
     p_s3: "Senior Tech Lead review, green GitHub Actions CI badge, Docker image, and full 100% IP source handoff.",
+    skip_link: "Skip to main content",
   },
   es: {
     nav_sandbox: "Demo Interactiva",
@@ -77,7 +78,7 @@ const I18N = {
     adr1_ver: "Prueba de estrés de 50 hilos simultáneos superada con 0 errores de bloqueo en kiberlabs-benchmarks.",
     adr2_ctx: "Enviar catálogos crudos, spam de webhooks o OCR ruidoso directo a un LLM desperdicia el 85–95% del gasto en tokens e introduce fallos no deterministas.",
     adr2_dec: "Colocar filtros deterministas en Python / Pydantic v2 (márgenes, IBAN MOD-97, NLU regex, SLAs) antes de cualquier llamada opcional a IA.",
-    adr2_ver: "Procesa decenas de miles de SKUs/s y mensajes NLU/s localmente con $0.00 de coste en tokens.",
+    adr2_ver: "Procesa 35.000+ SKUs/s y 65.000+ turnos NLU/s localmente con $0.00 de coste en tokens.",
     adr3_ctx: "Scrapers, procesadores de archivos y webhooks FastAPI son blancos habituales de robo de metadatos SSRF, path traversal y tormentas de replay.",
     adr3_dec: "Entregar contenedores Docker multi-stage non-root con autenticación HMAC X-API-Key en tiempo constante, rate limiting deslizante, bloqueo de IPs privadas/metadatos y deduplicación atómica.",
     adr3_ver: "100% de bloqueo sobre 112 payloads adversariales reales en CI automatizado.",
@@ -88,14 +89,31 @@ const I18N = {
     p_s1: "Hitos a precio cerrado por escrito, criterios de aceptación explícitos y límites fuera de alcance acordados antes de programar.",
     p_s2: "Motor Python 3.11+ tipado, esquema SQLite WAL / Postgres, guardias de seguridad y suite reproducible pytest.",
     p_s3: "Revisión de Senior Tech Lead, badge CI verde en GitHub Actions, imagen Docker y transferencia del 100% de propiedad intelectual.",
+    skip_link: "Saltar al contenido principal",
   },
 };
 
-let currentLang = localStorage.getItem("kl_lang") === "es" ? "es" : "en";
+function safeGetLang() {
+  try {
+    return localStorage.getItem("kl_lang") === "es" ? "es" : "en";
+  } catch {
+    return "en";
+  }
+}
+
+function safeSetLang(lang) {
+  try {
+    localStorage.setItem("kl_lang", lang);
+  } catch {
+    /* ignore storage restrictions */
+  }
+}
+
+let currentLang = safeGetLang();
 
 function applyLang(lang) {
   currentLang = lang;
-  localStorage.setItem("kl_lang", lang);
+  safeSetLang(lang);
   document.documentElement.lang = lang;
   const dict = I18N[lang];
   document.querySelectorAll("[data-i18n]").forEach((el) => {
@@ -105,7 +123,9 @@ function applyLang(lang) {
     else el.textContent = dict[key];
   });
   document.querySelectorAll(".lang-btn").forEach((btn) => {
-    btn.classList.toggle("active", btn.dataset.lang === lang);
+    const active = btn.dataset.lang === lang;
+    btn.classList.toggle("active", active);
+    btn.setAttribute("aria-pressed", String(active));
   });
 }
 

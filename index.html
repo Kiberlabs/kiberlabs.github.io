@@ -5,10 +5,11 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>KiberLabs — AI &amp; Python B2B Automation Studio</title>
   <meta name="description" content="Senior-reviewed Python 3.11+ automation, price intelligence sieves, 24/7 omnichannel bots, zero-hallucination RAG engines, 3-way invoice reconciliation, and FastAPI + Docker gateways delivered fixed-price in 2–7 days." />
+  <link rel="canonical" href="https://kiberlabs.github.io/" />
   <meta property="og:type" content="website" />
   <meta property="og:url" content="https://kiberlabs.github.io/" />
   <meta property="og:title" content="KiberLabs — AI &amp; Python B2B Automation Studio" />
-  <meta property="og:description" content="7 CI-verified Python 3.11+ open-source engines, live browser sandboxes, 112-payload Red-Team benchmarks, Trust Center &amp; fixed-price SOW PDF generator." />
+  <meta property="og:description" content="6 CI-verified Python 3.11+ open-source engines + benchmark suite, live browser sandboxes, 112-payload Red-Team benchmarks, Trust Center &amp; fixed-price SOW PDF generator." />
   <meta property="og:image" content="https://kiberlabs.github.io/assets/kiberlabs_logo_oficial.jpg" />
   <meta name="twitter:card" content="summary_large_image" />
   <meta name="twitter:title" content="KiberLabs — AI &amp; Python B2B Automation Studio" />
@@ -16,15 +17,40 @@
   <meta name="twitter:image" content="https://kiberlabs.github.io/assets/kiberlabs_logo_oficial.jpg" />
   <link rel="icon" type="image/jpeg" href="assets/kiberlabs_logo_oficial.jpg" />
   <link rel="stylesheet" href="styles.css" />
+  <script type="application/ld+json">
+  {
+    "@context": "https://schema.org",
+    "@type": "Organization",
+    "name": "KiberLabs Engineering",
+    "url": "https://kiberlabs.github.io/",
+    "logo": "https://kiberlabs.github.io/assets/kiberlabs_logo_oficial.jpg",
+    "description": "Fixed-Price Python 3.11+ & AI Automation Studio delivering deterministic price intelligence sieves, 24/7 omnichannel bots, grounded B2B RAG engines, 3-way invoice reconciliation, and FastAPI Docker gateways.",
+    "address": {
+      "@type": "PostalAddress",
+      "addressCountry": "ES"
+    },
+    "sameAs": [
+      "https://github.com/Kiberlabs",
+      "https://github.com/Kiberlabs/ecommerce-price-monitor-sieve",
+      "https://github.com/Kiberlabs/omnichannel-lead-bot",
+      "https://github.com/Kiberlabs/ai-shortform-video-pipeline",
+      "https://github.com/Kiberlabs/b2b-rag-citation-engine",
+      "https://github.com/Kiberlabs/kiberlabs-automation-api",
+      "https://github.com/Kiberlabs/b2b-invoice-reconciliation-engine",
+      "https://github.com/Kiberlabs/kiberlabs-benchmarks"
+    ]
+  }
+  </script>
 </head>
 <body>
+  <a class="skip-link" href="#main" data-i18n="skip_link">Skip to main content</a>
   <header class="topbar">
     <div class="container topbar-inner">
       <a href="#" class="brand">
-        <img src="assets/kiberlabs_logo_oficial.jpg" alt="KiberLabs Logo" />
+        <img src="assets/kiberlabs_logo_oficial.jpg" alt="KiberLabs Logo" width="38" height="38" />
         <span>KiberLabs</span>
       </a>
-      <nav class="nav-links">
+      <nav class="nav-links" aria-label="Primary navigation">
         <a href="#sandbox" data-i18n="nav_sandbox">Live Sandbox</a>
         <a href="#portfolio" data-i18n="nav_portfolio">Engines</a>
         <a href="benchmarks.html" data-i18n="nav_benchmarks">Benchmarks</a>
@@ -33,13 +59,13 @@
         <a href="https://github.com/Kiberlabs" target="_blank" rel="noopener">GitHub</a>
       </nav>
       <div class="lang-toggle" role="group" aria-label="Language switcher">
-        <button class="lang-btn active" data-lang="en" type="button">EN</button>
-        <button class="lang-btn" data-lang="es" type="button">ES</button>
+        <button class="lang-btn active" data-lang="en" type="button" aria-pressed="true">EN</button>
+        <button class="lang-btn" data-lang="es" type="button" aria-pressed="false">ES</button>
       </div>
     </div>
   </header>
 
-  <main>
+  <main id="main">
     <section class="hero">
       <div class="container">
         <div class="hero-grid">
@@ -71,7 +97,7 @@
             <span data-i18n="m_ci">GitHub Actions Passing (Py 3.11 &amp; 3.12)</span>
           </div>
           <div class="metric-card">
-            <strong>100+ Tests</strong>
+            <strong>436 Tests</strong>
             <span data-i18n="m_tests">Automated pytest &amp; Security Guards</span>
           </div>
           <div class="metric-card">
@@ -94,15 +120,15 @@
         </div>
 
         <div class="sandbox-shell">
-          <div class="tabs-bar" role="tablist">
-            <button class="tab-btn active" data-tab="tab-sieve" type="button" data-i18n="tab_sieve">1. Margin Sieve Engine</button>
-            <button class="tab-btn" data-tab="tab-rag" type="button" data-i18n="tab_rag">2. Grounded RAG Verifier</button>
-            <button class="tab-btn" data-tab="tab-bot" type="button" data-i18n="tab_bot">3. 24/7 Lead Bot Simulator</button>
-            <button class="tab-btn" data-tab="tab-invoice" type="button" data-i18n="tab_invoice">4. Invoice 3-Way &amp; IBAN Auditor</button>
+          <div class="tabs-bar" role="tablist" aria-label="Interactive Engineering Sandboxes">
+            <button id="btn-tab-sieve" class="tab-btn active" role="tab" aria-selected="true" aria-controls="tab-sieve" tabindex="0" data-tab="tab-sieve" type="button" data-i18n="tab_sieve">1. Margin Sieve Engine</button>
+            <button id="btn-tab-rag" class="tab-btn" role="tab" aria-selected="false" aria-controls="tab-rag" tabindex="-1" data-tab="tab-rag" type="button" data-i18n="tab_rag">2. Grounded RAG Verifier</button>
+            <button id="btn-tab-bot" class="tab-btn" role="tab" aria-selected="false" aria-controls="tab-bot" tabindex="-1" data-tab="tab-bot" type="button" data-i18n="tab_bot">3. 24/7 Lead Bot Simulator</button>
+            <button id="btn-tab-invoice" class="tab-btn" role="tab" aria-selected="false" aria-controls="tab-invoice" tabindex="-1" data-tab="tab-invoice" type="button" data-i18n="tab_invoice">4. Invoice 3-Way &amp; IBAN Auditor</button>
           </div>
 
           <!-- TAB 1: Margin Sieve -->
-          <div id="tab-sieve" class="tab-panel active">
+          <div id="tab-sieve" class="tab-panel active" role="tabpanel" aria-labelledby="btn-tab-sieve" tabindex="0">
             <form id="sieve-form" class="form-grid">
               <div class="field">
                 <label for="s-supplier" data-i18n="lbl_supplier">Supplier Cost (EUR)</label>
@@ -134,13 +160,13 @@
               </div>
             </form>
             <div class="output-pane">
-              <span id="sieve-badge" class="status-badge status-ok">APPROVED</span>
-              <pre id="sieve-json" class="code-out"></pre>
+              <span id="sieve-badge" class="status-badge status-ok" aria-live="polite">APPROVED</span>
+              <pre id="sieve-json" class="code-out" aria-live="polite"></pre>
             </div>
           </div>
 
           <!-- TAB 2: RAG Verifier -->
-          <div id="tab-rag" class="tab-panel">
+          <div id="tab-rag" class="tab-panel" role="tabpanel" aria-labelledby="btn-tab-rag" tabindex="0" hidden>
             <div>
               <div class="chip-row">
                 <button class="chip rag-preset" type="button" data-q="What is the deadline for data breach notification?">EN: Breach SLA (72h)</button>
@@ -157,13 +183,13 @@
               </div>
             </div>
             <div class="output-pane">
-              <span id="rag-badge" class="status-badge status-ok">GROUNDED</span>
-              <pre id="rag-json" class="code-out"></pre>
+              <span id="rag-badge" class="status-badge status-ok" aria-live="polite">GROUNDED</span>
+              <pre id="rag-json" class="code-out" aria-live="polite"></pre>
             </div>
           </div>
 
           <!-- TAB 3: Lead Bot -->
-          <div id="tab-bot" class="tab-panel">
+          <div id="tab-bot" class="tab-panel" role="tabpanel" aria-labelledby="btn-tab-bot" tabindex="0" hidden>
             <div>
               <div class="chip-row">
                 <button class="chip bot-preset" type="button" data-msg="Hola, necesito un bot de WhatsApp para mi empresa">ES: Pedir Bot</button>
@@ -171,21 +197,21 @@
                 <button class="chip bot-preset" type="button" data-msg="Hi, we need a Python scraper with $900 budget">EN: 1-Turn Qualify</button>
                 <button class="chip bot-preset" type="button" data-msg="Claim your free crypto airdrop bonus now!">Spam Filter Test</button>
               </div>
-              <div id="bot-log" class="chat-log"></div>
+              <div id="bot-log" class="chat-log" role="log" aria-live="polite" aria-label="Lead bot conversation log"></div>
               <div class="chat-input-row">
-                <input id="bot-input" type="text" placeholder="Type a WhatsApp / Telegram message..." />
+                <input id="bot-input" type="text" placeholder="Type a WhatsApp / Telegram message..." aria-label="Lead bot message input" data-i18n-placeholder="bot_placeholder" data-i18n-aria-label="bot_input_aria" />
                 <button id="bot-send" class="btn btn-primary" type="button" data-i18n="btn_send">Send</button>
                 <button id="bot-reset" class="btn btn-secondary" type="button" data-i18n="btn_reset">Reset</button>
               </div>
             </div>
             <div class="output-pane">
-              <span id="bot-badge" class="status-badge status-warn">STATE: NEW</span>
-              <pre id="bot-json" class="code-out"></pre>
+              <span id="bot-badge" class="status-badge status-warn" aria-live="polite">STATE: NEW</span>
+              <pre id="bot-json" class="code-out" aria-live="polite"></pre>
             </div>
           </div>
 
           <!-- TAB 4: Invoice 3-Way & IBAN MOD-97 Auditor -->
-          <div id="tab-invoice" class="tab-panel">
+          <div id="tab-invoice" class="tab-panel" role="tabpanel" aria-labelledby="btn-tab-invoice" tabindex="0" hidden>
             <div>
               <div class="chip-row">
                 <button class="chip inv-preset" type="button" data-po="1250" data-grn="1250" data-inv="1250" data-iban="ES9121000418450200051332" data-vendor="1" data-dup="0">Clean Match (PASS)</button>
@@ -217,8 +243,8 @@
               </form>
             </div>
             <div class="output-pane">
-              <span id="inv-badge" class="status-badge status-ok">PASS · RISK 0/100</span>
-              <pre id="inv-json" class="code-out"></pre>
+              <span id="inv-badge" class="status-badge status-ok" aria-live="polite">PASS · RISK 0/100</span>
+              <pre id="inv-json" class="code-out" aria-live="polite"></pre>
             </div>
           </div>
         </div>
@@ -234,11 +260,11 @@
 
         <div class="repo-grid">
           <article class="repo-card">
-            <img class="cover" src="assets/cover_01_price_sieve.jpg" alt="Price Monitor & Margin Sieve" loading="lazy" />
+            <img class="cover" src="assets/cover_01_price_sieve.jpg" alt="Price Monitor & Margin Sieve" width="896" height="500" loading="lazy" />
             <div class="repo-body">
               <div class="repo-top">
                 <h3>01 · Price Monitor &amp; Margin Sieve</h3>
-                <img src="https://github.com/Kiberlabs/ecommerce-price-monitor-sieve/actions/workflows/ci.yml/badge.svg" alt="CI" />
+                <img src="https://github.com/Kiberlabs/ecommerce-price-monitor-sieve/actions/workflows/ci.yml/badge.svg" alt="CI status for ecommerce-price-monitor-sieve" width="104" height="20" />
               </div>
               <p data-i18n="r1_desc">Zero-token 3-stage supplier catalog filter, net-margin calculator, SSRF URL guard, and SQLite WAL price-drop alerts.</p>
               <div class="tags"><span class="tag">Python 3.11+</span><span class="tag">Pydantic v2</span><span class="tag">SQLite WAL</span><span class="tag">SSRF Guard</span></div>
@@ -247,11 +273,11 @@
           </article>
 
           <article class="repo-card">
-            <img class="cover" src="assets/cover_02_lead_bot.jpg" alt="24/7 Omnichannel Lead Bot" loading="lazy" />
+            <img class="cover" src="assets/cover_02_lead_bot.jpg" alt="24/7 Omnichannel Lead Bot" width="896" height="500" loading="lazy" />
             <div class="repo-body">
               <div class="repo-top">
                 <h3>02 · 24/7 Omnichannel Lead Bot</h3>
-                <img src="https://github.com/Kiberlabs/omnichannel-lead-bot/actions/workflows/ci.yml/badge.svg" alt="CI" />
+                <img src="https://github.com/Kiberlabs/omnichannel-lead-bot/actions/workflows/ci.yml/badge.svg" alt="CI status for omnichannel-lead-bot" width="104" height="20" />
               </div>
               <p data-i18n="r2_desc">Bilingual ES/EN zero-token NLU, adaptive lead qualification state machine, spam blocking, and atomic webhook idempotency.</p>
               <div class="tags"><span class="tag">WhatsApp / TG</span><span class="tag">Zero-Token NLU</span><span class="tag">Idempotent DB</span></div>
@@ -260,11 +286,11 @@
           </article>
 
           <article class="repo-card">
-            <img class="cover" src="assets/cover_03_video_pipeline.jpg" alt="AI Short-Form Video Pipeline" loading="lazy" />
+            <img class="cover" src="assets/cover_03_video_pipeline.jpg" alt="AI Short-Form Video Pipeline" width="896" height="500" loading="lazy" />
             <div class="repo-body">
               <div class="repo-top">
                 <h3>03 · 9:16 Video &amp; Audio Pipeline</h3>
-                <img src="https://github.com/Kiberlabs/ai-shortform-video-pipeline/actions/workflows/ci.yml/badge.svg" alt="CI" />
+                <img src="https://github.com/Kiberlabs/ai-shortform-video-pipeline/actions/workflows/ci.yml/badge.svg" alt="CI status for ai-shortform-video-pipeline" width="104" height="20" />
               </div>
               <p data-i18n="r3_desc">9:16 mobile safe-zone validator, frame-accurate .ASS subtitle generator, EBU R128 loudnorm FFmpeg builder, and QA ledger.</p>
               <div class="tags"><span class="tag">FFmpeg</span><span class="tag">EBU R128</span><span class="tag">ASS Safe-Zone</span><span class="tag">QA Gate</span></div>
@@ -273,11 +299,11 @@
           </article>
 
           <article class="repo-card">
-            <img class="cover" src="assets/cover_04_rag_engine.jpg" alt="B2B RAG Citation Engine" loading="lazy" />
+            <img class="cover" src="assets/cover_04_rag_engine.jpg" alt="B2B RAG Citation Engine" width="896" height="500" loading="lazy" />
             <div class="repo-body">
               <div class="repo-top">
                 <h3>04 · Grounded B2B RAG Engine</h3>
-                <img src="https://github.com/Kiberlabs/b2b-rag-citation-engine/actions/workflows/ci.yml/badge.svg" alt="CI" />
+                <img src="https://github.com/Kiberlabs/b2b-rag-citation-engine/actions/workflows/ci.yml/badge.svg" alt="CI status for b2b-rag-citation-engine" width="104" height="20" />
               </div>
               <p data-i18n="r4_desc">Article-aware legal/policy chunking with SHA-256 hashes, SQLite FTS5 BM25 bilingual search, and zero-hallucination abstention.</p>
               <div class="tags"><span class="tag">SQLite FTS5</span><span class="tag">BM25</span><span class="tag">SHA-256 Citations</span></div>
@@ -286,11 +312,11 @@
           </article>
 
           <article class="repo-card">
-            <img class="cover" src="assets/cover_05_automation_api.jpg" alt="FastAPI Docker Automation Gateway" loading="lazy" />
+            <img class="cover" src="assets/cover_05_automation_api.jpg" alt="FastAPI Docker Automation Gateway" width="896" height="500" loading="lazy" />
             <div class="repo-body">
               <div class="repo-top">
                 <h3>05 · FastAPI + Docker Gateway</h3>
-                <img src="https://github.com/Kiberlabs/kiberlabs-automation-api/actions/workflows/ci.yml/badge.svg" alt="CI" />
+                <img src="https://github.com/Kiberlabs/kiberlabs-automation-api/actions/workflows/ci.yml/badge.svg" alt="CI status for kiberlabs-automation-api" width="104" height="20" />
               </div>
               <p data-i18n="r5_desc">Production REST gateway unifying Sieve, Lead Webhooks, and RAG behind HMAC X-API-Key auth, sliding-window rate limits, and Docker.</p>
               <div class="tags"><span class="tag">FastAPI</span><span class="tag">Docker</span><span class="tag">Rate Limiter</span><span class="tag">OpenAPI</span></div>
@@ -299,11 +325,11 @@
           </article>
 
           <article class="repo-card">
-            <img class="cover" src="assets/cover_06_invoice_reconciler.jpg" alt="B2B Invoice Reconciliation Engine" loading="lazy" />
+            <img class="cover" src="assets/cover_06_invoice_reconciler.jpg" alt="B2B Invoice Reconciliation Engine" width="896" height="500" loading="lazy" />
             <div class="repo-body">
               <div class="repo-top">
                 <h3>06 · Invoice Reconciliation Engine</h3>
-                <img src="https://github.com/Kiberlabs/b2b-invoice-reconciliation-engine/actions/workflows/ci.yml/badge.svg" alt="CI" />
+                <img src="https://github.com/Kiberlabs/b2b-invoice-reconciliation-engine/actions/workflows/ci.yml/badge.svg" alt="CI status for b2b-invoice-reconciliation-engine" width="104" height="20" />
               </div>
               <p data-i18n="r6_desc">Multi-format invoice parser (JSON, UBL/Facturae XML, OCR), 3-way PO/GRN match with 0-100 risk score, IBAN MOD-97, and a SHA-256 hash-chained tamper-evident ledger.</p>
               <div class="tags"><span class="tag">3-Way Match</span><span class="tag">IBAN MOD-97</span><span class="tag">Hash-Chain Ledger</span><span class="tag">FastAPI Dashboard</span></div>
@@ -325,20 +351,27 @@
             <div class="field full">
               <label for="est-track" data-i18n="lbl_track">Automation Track</label>
               <select id="est-track">
-                <option value="sieve">Web Scraping &amp; Price Intelligence Sieve</option>
-                <option value="bot">24/7 Omnichannel Lead Qualification Bot</option>
-                <option value="video">Automated 9:16 FFmpeg &amp; ASS Video Pipeline</option>
-                <option value="rag">Zero-Hallucination B2B RAG &amp; Citation Engine</option>
-                <option value="api" selected>Production FastAPI + Auth + Docker Gateway</option>
-                <option value="invoice">B2B 3-Way Invoice Reconciliation &amp; Hash Ledger</option>
+                <option value="sieve" data-i18n="opt_track_sieve">Web Scraping &amp; Price Intelligence Sieve</option>
+                <option value="bot" data-i18n="opt_track_bot">24/7 Omnichannel Lead Qualification Bot</option>
+                <option value="video" data-i18n="opt_track_video">Automated 9:16 FFmpeg &amp; ASS Video Pipeline</option>
+                <option value="rag" data-i18n="opt_track_rag">Zero-Hallucination B2B RAG &amp; Citation Engine</option>
+                <option value="api" selected data-i18n="opt_track_api">Production FastAPI + Auth + Docker Gateway</option>
+                <option value="invoice" data-i18n="opt_track_invoice">B2B 3-Way Invoice Reconciliation &amp; Hash Ledger</option>
               </select>
             </div>
             <div class="field full">
               <label for="est-tier" data-i18n="lbl_tier">Delivery Tier</label>
               <select id="est-tier">
-                <option value="mvp">Fast MVP CLI / Core Module (2–5 days)</option>
-                <option value="production" selected>Production Ready + DB + Webhooks</option>
-                <option value="enterprise">Multi-Source / Custom Integrations</option>
+                <option value="mvp" data-i18n="opt_tier_mvp">Fast MVP CLI / Core Module (2–5 days)</option>
+                <option value="production" selected data-i18n="opt_tier_prod">Production Ready + DB + Webhooks</option>
+                <option value="enterprise" data-i18n="opt_tier_ent">Multi-Source / Custom Integrations</option>
+              </select>
+            </div>
+            <div class="field full">
+              <label for="est-currency" data-i18n="lbl_curr">Currency</label>
+              <select id="est-currency">
+                <option value="USD" selected>USD ($)</option>
+                <option value="EUR">EUR (€)</option>
               </select>
             </div>
             <div class="checks-row">
@@ -348,12 +381,12 @@
           </div>
 
           <div class="output-pane">
-            <span class="status-badge status-ok" id="est-turnaround">EST. 6 DAYS</span>
-            <div class="price-big" id="est-price">$1,250</div>
+            <span class="status-badge status-ok" id="est-turnaround" aria-live="polite">EST. 8 DAYS</span>
+            <div class="price-big" id="est-price" aria-live="polite">$1,250</div>
             <ul id="est-milestones" class="milestone-list"></ul>
             <div style="display:flex;flex-wrap:wrap;gap:10px;">
               <button id="est-copy" class="btn btn-primary" type="button" data-i18n="btn_copy_brief">Copy Scope Brief for Upwork / LinkedIn</button>
-              <a id="est-sow-link" href="sow.html?track=api&amp;lang=en" class="btn btn-secondary" data-i18n="btn_open_sow">Open Pre-Filled SOW PDF →</a>
+              <a id="est-sow-link" href="sow.html?track=api&amp;lang=en&amp;tier=production&amp;docker=1&amp;ci=1&amp;currency=USD" class="btn btn-secondary" data-i18n="btn_open_sow">Open Pre-Filled SOW PDF →</a>
             </div>
           </div>
         </div>

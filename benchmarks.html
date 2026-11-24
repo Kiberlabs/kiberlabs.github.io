@@ -5,32 +5,43 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Benchmarks &amp; Red-Team Security — KiberLabs</title>
   <meta name="description" content="Reproducible Python 3.11+ throughput, p50/p95/p99 latency, 50-thread SQLite WAL zero-lock concurrency, and 100+ payload Red-Team security metrics measured by KiberLabs." />
+  <link rel="canonical" href="https://kiberlabs.github.io/benchmarks.html" />
+  <meta property="og:type" content="website" />
+  <meta property="og:url" content="https://kiberlabs.github.io/benchmarks.html" />
+  <meta property="og:title" content="Benchmarks &amp; Red-Team Security — KiberLabs" />
+  <meta property="og:description" content="Reproducible Python 3.11+ throughput, p50/p95/p99 latency, 50-thread SQLite WAL zero-lock concurrency, and 100+ payload Red-Team security metrics measured by KiberLabs." />
+  <meta property="og:image" content="https://kiberlabs.github.io/assets/kiberlabs_logo_oficial.jpg" />
+  <meta name="twitter:card" content="summary_large_image" />
+  <meta name="twitter:title" content="Benchmarks &amp; Red-Team Security — KiberLabs" />
+  <meta name="twitter:description" content="Reproducible Python 3.11+ throughput, 50-thread SQLite WAL concurrency, and 100+ Red-Team payload blocks." />
+  <meta name="twitter:image" content="https://kiberlabs.github.io/assets/kiberlabs_logo_oficial.jpg" />
   <link rel="icon" type="image/jpeg" href="assets/kiberlabs_logo_oficial.jpg" />
   <link rel="stylesheet" href="styles.css" />
 </head>
 <body>
+  <a class="skip-link" href="#main" data-i18n="skip_link">Skip to main content</a>
   <header class="topbar">
     <div class="container topbar-inner">
       <a href="index.html" class="brand">
-        <img src="assets/kiberlabs_logo_oficial.jpg" alt="KiberLabs Logo" />
+        <img src="assets/kiberlabs_logo_oficial.jpg" alt="KiberLabs Logo" width="38" height="38" />
         <span>KiberLabs</span>
       </a>
-      <nav class="nav-links">
+      <nav class="nav-links" aria-label="Primary navigation">
         <a href="index.html#sandbox" data-i18n="nav_sandbox">Live Sandbox</a>
         <a href="index.html#portfolio" data-i18n="nav_portfolio">Engines</a>
-        <a href="benchmarks.html" class="active" data-i18n="nav_benchmarks">Benchmarks</a>
+        <a href="benchmarks.html" class="active" aria-current="page" data-i18n="nav_benchmarks">Benchmarks</a>
         <a href="trust.html" data-i18n="nav_trust">Trust Center</a>
         <a href="sow.html" data-i18n="nav_sow">SOW PDF</a>
         <a href="https://github.com/Kiberlabs" target="_blank" rel="noopener">GitHub</a>
       </nav>
       <div class="lang-toggle" role="group" aria-label="Language switcher">
-        <button class="lang-btn active" data-lang="en" type="button">EN</button>
-        <button class="lang-btn" data-lang="es" type="button">ES</button>
+        <button class="lang-btn active" data-lang="en" type="button" aria-pressed="true">EN</button>
+        <button class="lang-btn" data-lang="es" type="button" aria-pressed="false">ES</button>
       </div>
     </div>
   </header>
 
-  <main>
+  <main id="main">
     <section class="subhero">
       <div class="container">
         <div class="pill">
@@ -45,7 +56,7 @@
           <a href="https://github.com/Kiberlabs/kiberlabs-benchmarks" target="_blank" rel="noopener" class="btn btn-primary" data-i18n="bh_repo_btn">Inspect Benchmark Repo (v0.1.0)</a>
           <a href="data/benchmark_report.json" target="_blank" rel="noopener" class="btn btn-secondary" data-i18n="bh_json_btn">Download Raw JSON Artifact</a>
           <a href="https://github.com/Kiberlabs/kiberlabs-benchmarks/actions/workflows/ci.yml" target="_blank" rel="noopener" style="display:inline-flex;align-items:center;">
-            <img src="https://github.com/Kiberlabs/kiberlabs-benchmarks/actions/workflows/ci.yml/badge.svg" alt="kiberlabs-benchmarks CI" />
+            <img src="https://github.com/Kiberlabs/kiberlabs-benchmarks/actions/workflows/ci.yml/badge.svg" alt="kiberlabs-benchmarks CI" width="104" height="20" style="height:20px;width:auto;" />
           </a>
         </div>
 
@@ -64,7 +75,7 @@
           </div>
           <div class="metric-card">
             <strong id="kpi-runtime">—</strong>
-            <span id="kpi-env-sub">Measured Runtime Environment</span>
+            <span id="kpi-env-sub" data-i18n="kpi_env_sub">Measured Runtime Environment</span>
           </div>
         </div>
       </div>
@@ -76,8 +87,8 @@
           <h2 data-i18n="sec_perf_title">Throughput &amp; Latency Distribution (p50 / p95 / p99)</h2>
           <p data-i18n="sec_perf_desc">Measured with high-resolution nanosecond timers (<code>time.perf_counter_ns</code>) across core KiberLabs production patterns.</p>
         </div>
-        <div class="cards-grid-2" id="bench-cards">
-          <div class="panel-card">Loading measured benchmark artifact...</div>
+        <div class="cards-grid-2" id="bench-cards" aria-live="polite">
+          <div class="panel-card" data-i18n="loading_bench">Loading measured benchmark artifact...</div>
         </div>
       </div>
     </section>
@@ -87,9 +98,9 @@
         <div class="panel-card" id="wal-panel">
           <div class="bench-head">
             <h2 style="margin:0;font-size:1.35rem;" data-i18n="sec_wal_title">50-Thread SQLite WAL Zero-Lock Stress Test</h2>
-            <span class="status-badge status-ok" id="wal-badge">LOADING...</span>
+            <span class="status-badge status-ok" id="wal-badge" data-i18n="loading_badge">LOADING...</span>
           </div>
-          <p style="color:var(--muted);margin:10px 0 14px;" id="wal-summary"></p>
+          <p style="color:var(--muted);margin:10px 0 14px;" id="wal-summary" aria-live="polite"></p>
           <div class="latency-pills" id="wal-pills"></div>
         </div>
       </div>
@@ -113,8 +124,8 @@
                 <th data-i18n="th_samples">Sample Blocked Vectors</th>
               </tr>
             </thead>
-            <tbody id="rt-tbody">
-              <tr><td colspan="6">Loading Red-Team matrix...</td></tr>
+            <tbody id="rt-tbody" aria-live="polite">
+              <tr><td colspan="6" data-i18n="loading_rt">Loading Red-Team matrix...</td></tr>
             </tbody>
           </table>
         </div>

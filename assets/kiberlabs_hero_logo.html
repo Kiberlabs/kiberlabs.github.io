@@ -85,6 +85,12 @@
     }
   }
 
+  .container.paused .diagonal,
+  .container.paused .diagonal2,
+  .container.paused .glow-bg {
+    animation-play-state: paused;
+  }
+
   canvas {
     position: absolute;
     top: 0;
@@ -306,6 +312,9 @@ function drawLiquid() {
 }
 
 const reducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)');
+let rafId = null;
+let isPageVisible = !document.hidden;
+let isInViewport = true;
 
 function renderFrame(step) {
   ctx.clearRect(0, 0, W, H);
@@ -320,16 +329,62 @@ function renderFrame(step) {
   drawParticles(step);
 }
 
-function animate() {
-  if (reducedMotion.matches) {
-    renderFrame(false);
+function shouldAnimate() {
+  return !reducedMotion.matches && isPageVisible && isInViewport;
+}
+
+function stopLoop() {
+  if (rafId !== null) {
+    cancelAnimationFrame(rafId);
+    rafId = null;
+  }
+  stage.classList.add('paused');
+}
+
+function tick() {
+  rafId = null;
+  if (!shouldAnimate()) {
+    stage.classList.add('paused');
     return;
   }
   renderFrame(true);
-  requestAnimationFrame(animate);
+  rafId = requestAnimationFrame(tick);
 }
 
-animate();
+function syncAnimation() {
+  if (shouldAnimate()) {
+    stage.classList.remove('paused');
+    if (rafId === null) {
+      rafId = requestAnimationFrame(tick);
+    }
+  } else {
+    stopLoop();
+    if (reducedMotion.matches) renderFrame(false);
+  }
+}
+
+document.addEventListener('visibilitychange', () => {
+  isPageVisible = !document.hidden;
+  syncAnimation();
+});
+
+if ('IntersectionObserver' in window) {
+  const observer = new IntersectionObserver(
+    (entries) => {
+      isInViewport = entries.some((entry) => entry.isIntersecting);
+      syncAnimation();
+    },
+    { threshold: 0.05 }
+  );
+  observer.observe(stage);
+}
+
+if (reducedMotion.addEventListener) {
+  reducedMotion.addEventListener('change', syncAnimation);
+}
+
+renderFrame(!reducedMotion.matches);
+syncAnimation();
 </script>
 </body>
 </html>

@@ -5,32 +5,43 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Trust, Security &amp; Delivery Center — KiberLabs</title>
   <meta name="description" content="KiberLabs B2B Trust Center: GDPR-ready data isolation, zero-AI-training commitment, Senior Tech Lead QA protocol, 100% client IP ownership, and Public Architecture Decision Records (ADRs)." />
+  <link rel="canonical" href="https://kiberlabs.github.io/trust.html" />
+  <meta property="og:type" content="website" />
+  <meta property="og:url" content="https://kiberlabs.github.io/trust.html" />
+  <meta property="og:title" content="Trust, Security &amp; Delivery Center — KiberLabs" />
+  <meta property="og:description" content="KiberLabs B2B Trust Center: GDPR-ready data isolation, zero-AI-training commitment, Senior Tech Lead QA protocol, 100% client IP ownership, and Public Architecture Decision Records (ADRs)." />
+  <meta property="og:image" content="https://kiberlabs.github.io/assets/kiberlabs_logo_oficial.jpg" />
+  <meta name="twitter:card" content="summary_large_image" />
+  <meta name="twitter:title" content="Trust, Security &amp; Delivery Center — KiberLabs" />
+  <meta name="twitter:description" content="GDPR-ready data isolation, zero-AI-training commitment, Senior Tech Lead QA protocol &amp; 100% client IP ownership." />
+  <meta name="twitter:image" content="https://kiberlabs.github.io/assets/kiberlabs_logo_oficial.jpg" />
   <link rel="icon" type="image/jpeg" href="assets/kiberlabs_logo_oficial.jpg" />
   <link rel="stylesheet" href="styles.css" />
 </head>
 <body>
+  <a class="skip-link" href="#main" data-i18n="skip_link">Skip to main content</a>
   <header class="topbar">
     <div class="container topbar-inner">
       <a href="index.html" class="brand">
-        <img src="assets/kiberlabs_logo_oficial.jpg" alt="KiberLabs Logo" />
+        <img src="assets/kiberlabs_logo_oficial.jpg" alt="KiberLabs Logo" width="38" height="38" />
         <span>KiberLabs</span>
       </a>
-      <nav class="nav-links">
+      <nav class="nav-links" aria-label="Primary navigation">
         <a href="index.html#sandbox" data-i18n="nav_sandbox">Live Sandbox</a>
         <a href="index.html#portfolio" data-i18n="nav_portfolio">Engines</a>
         <a href="benchmarks.html" data-i18n="nav_benchmarks">Benchmarks</a>
-        <a href="trust.html" class="active" data-i18n="nav_trust">Trust Center</a>
+        <a href="trust.html" class="active" aria-current="page" data-i18n="nav_trust">Trust Center</a>
         <a href="sow.html" data-i18n="nav_sow">SOW PDF</a>
         <a href="https://github.com/Kiberlabs" target="_blank" rel="noopener">GitHub</a>
       </nav>
       <div class="lang-toggle" role="group" aria-label="Language switcher">
-        <button class="lang-btn active" data-lang="en" type="button">EN</button>
-        <button class="lang-btn" data-lang="es" type="button">ES</button>
+        <button class="lang-btn active" data-lang="en" type="button" aria-pressed="true">EN</button>
+        <button class="lang-btn" data-lang="es" type="button" aria-pressed="false">ES</button>
       </div>
     </div>
   </header>
 
-  <main>
+  <main id="main">
     <section class="subhero">
       <div class="container">
         <div class="pill">
@@ -106,7 +117,7 @@
             <ul class="adr-points">
               <li><strong data-i18n="adr_ctx">Context:</strong> <span data-i18n="adr2_ctx">Routing raw catalog scrapes, spam webhooks, or noisy OCR records straight into LLMs wastes 85–95% of token spend and introduces non-deterministic failures.</span></li>
               <li><strong data-i18n="adr_dec">Decision:</strong> <span data-i18n="adr2_dec">Place strict Python / Pydantic v2 deterministic sieves (margin math, IBAN MOD-97, regex NLU, SLA gates) ahead of any optional AI step.</span></li>
-              <li><strong data-i18n="adr_ver">Verification:</strong> <span data-i18n="adr2_ver">Processes 38,000+ SKUs/sec and 70,000+ NLU turns/sec locally at $0.00 API token cost.</span></li>
+              <li><strong data-i18n="adr_ver">Verification:</strong> <span data-i18n="adr2_ver">Processes 35,000+ SKUs/sec and 65,000+ NLU turns/sec locally at $0.00 API token cost.</span></li>
             </ul>
           </article>
 
@@ -141,7 +152,7 @@
       <div class="container">
         <div class="panel-card">
           <div class="bench-head" style="margin-bottom:10px;">
-            <h2 style="margin:0;font-size:1.35rem;" data-i18n="sec_proto_title">Standard 4-Step Fixed-Price Delivery Protocol</h2>
+            <h2 style="margin:0;font-size:1.35rem;" data-i18n="sec_proto_title">Standard 3-Step Fixed-Price Delivery Protocol</h2>
             <span class="status-badge status-ok">2–7 DAYS</span>
           </div>
           <div class="cards-grid-3" style="margin-top:14px;">

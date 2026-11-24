@@ -1,0 +1,4 @@
+User-agent: *
+Allow: /
+
+Sitemap: https://kiberlabs.github.io/sitemap.xml

@@ -44,6 +44,40 @@ a:hover {
   text-decoration: underline;
 }
 
+.skip-link {
+  position: absolute;
+  left: -9999px;
+  top: 8px;
+  z-index: 100;
+  background: var(--cyan);
+  color: #04101b;
+  font-weight: 700;
+  padding: 10px 16px;
+  border-radius: 8px;
+  text-decoration: none;
+}
+
+.skip-link:focus {
+  left: 16px;
+  outline: 2px solid #fff;
+  outline-offset: 2px;
+}
+
+main[id],
+section[id] {
+  scroll-margin-top: 82px;
+}
+
+a:focus-visible,
+button:focus-visible,
+input:focus-visible,
+select:focus-visible,
+textarea:focus-visible,
+[tabindex]:focus-visible {
+  outline: 2px solid var(--cyan);
+  outline-offset: 2px;
+}
+
 .container {
   max-width: 1160px;
   margin: 0 auto;
@@ -333,6 +367,10 @@ section {
   padding: 22px;
 }
 
+.tab-panel[hidden] {
+  display: none;
+}
+
 .tab-panel.active {
   display: grid;
   grid-template-columns: 1.05fr 1fr;
@@ -373,10 +411,22 @@ section {
   font-size: 0.92rem;
 }
 
-.field input:focus,
-.field select:focus,
-.field textarea:focus {
-  outline: none;
+.field input:focus:not(:focus-visible),
+.field select:focus:not(:focus-visible),
+.field textarea:focus:not(:focus-visible),
+.chat-input-row input:focus:not(:focus-visible),
+.ms-row input:focus:not(:focus-visible) {
+  outline: 2px solid transparent;
+  border-color: var(--cyan);
+}
+
+.field input:focus-visible,
+.field select:focus-visible,
+.field textarea:focus-visible,
+.chat-input-row input:focus-visible,
+.ms-row input:focus-visible {
+  outline: 2px solid var(--cyan);
+  outline-offset: 2px;
   border-color: var(--cyan);
 }
 
@@ -535,6 +585,7 @@ pre.code-out {
 
 .repo-card img.cover {
   width: 100%;
+  height: auto;
   aspect-ratio: 16 / 9;
   object-fit: cover;
   border-bottom: 1px solid var(--border);
@@ -553,6 +604,12 @@ pre.code-out {
   align-items: center;
   justify-content: space-between;
   gap: 8px;
+}
+
+.repo-top img {
+  height: 20px;
+  width: auto;
+  flex-shrink: 0;
 }
 
 .repo-body h3 {
@@ -988,7 +1045,8 @@ footer {
   .hero-grid,
   .tab-panel.active,
   .estimator-grid,
-  .sow-layout {
+  .sow-layout,
+  .form-grid {
     grid-template-columns: 1fr;
   }
   .hero-emblem {
@@ -1011,6 +1069,22 @@ footer {
   }
 }
 
+@media (prefers-reduced-motion: reduce) {
+  html {
+    scroll-behavior: auto;
+  }
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
+  .btn:hover {
+    transform: none;
+  }
+}
+
 @page {
   size: A4;
   margin: 12mm;
@@ -1020,6 +1094,16 @@ footer {
   body {
     background: #ffffff !important;
     color: #0f172a !important;
+  }
+  .metric-card strong,
+  .latency-pills strong,
+  .trust-card h3 {
+    color: #0f172a !important;
+  }
+  pre.code-out {
+    background: #f8fafc !important;
+    color: #0f172a !important;
+    border: 1px solid #cbd5e1 !important;
   }
   .no-print,
   header.topbar,

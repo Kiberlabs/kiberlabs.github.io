@@ -5,32 +5,43 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Statement of Work (SOW) PDF Generator — KiberLabs</title>
   <meta name="description" content="Interactive bilingual EN/ES B2B Statement of Work & Technical Proposal PDF generator with editable fixed-price milestones, pytest acceptance criteria, and clean A4 print layout." />
+  <link rel="canonical" href="https://kiberlabs.github.io/sow.html" />
+  <meta property="og:type" content="website" />
+  <meta property="og:url" content="https://kiberlabs.github.io/sow.html" />
+  <meta property="og:title" content="Statement of Work (SOW) PDF Generator — KiberLabs" />
+  <meta property="og:description" content="Interactive bilingual EN/ES B2B Statement of Work &amp; Technical Proposal PDF generator with editable fixed-price milestones, pytest acceptance criteria, and clean A4 print layout." />
+  <meta property="og:image" content="https://kiberlabs.github.io/assets/kiberlabs_logo_oficial.jpg" />
+  <meta name="twitter:card" content="summary_large_image" />
+  <meta name="twitter:title" content="Statement of Work (SOW) PDF Generator — KiberLabs" />
+  <meta name="twitter:description" content="Bilingual EN/ES B2B Statement of Work &amp; Technical Proposal PDF generator with fixed-price milestones." />
+  <meta name="twitter:image" content="https://kiberlabs.github.io/assets/kiberlabs_logo_oficial.jpg" />
   <link rel="icon" type="image/jpeg" href="assets/kiberlabs_logo_oficial.jpg" />
   <link rel="stylesheet" href="styles.css" />
 </head>
 <body>
+  <a class="skip-link no-print" href="#main" data-i18n="skip_link">Skip to main content</a>
   <header class="topbar no-print">
     <div class="container topbar-inner">
       <a href="index.html" class="brand">
-        <img src="assets/kiberlabs_logo_oficial.jpg" alt="KiberLabs Logo" />
+        <img src="assets/kiberlabs_logo_oficial.jpg" alt="KiberLabs Logo" width="38" height="38" />
         <span>KiberLabs</span>
       </a>
-      <nav class="nav-links">
+      <nav class="nav-links" aria-label="Primary navigation">
         <a href="index.html#sandbox" data-i18n="nav_sandbox">Live Sandbox</a>
         <a href="index.html#portfolio" data-i18n="nav_portfolio">Engines</a>
         <a href="benchmarks.html" data-i18n="nav_benchmarks">Benchmarks</a>
         <a href="trust.html" data-i18n="nav_trust">Trust Center</a>
-        <a href="sow.html" class="active" data-i18n="nav_sow">SOW PDF</a>
+        <a href="sow.html" class="active" aria-current="page" data-i18n="nav_sow">SOW PDF</a>
         <a href="https://github.com/Kiberlabs" target="_blank" rel="noopener">GitHub</a>
       </nav>
       <div class="lang-toggle" role="group" aria-label="Language switcher">
-        <button class="lang-btn active" data-lang="en" type="button">EN</button>
-        <button class="lang-btn" data-lang="es" type="button">ES</button>
+        <button class="lang-btn active" data-lang="en" type="button" aria-pressed="true">EN</button>
+        <button class="lang-btn" data-lang="es" type="button" aria-pressed="false">ES</button>
       </div>
     </div>
   </header>
 
-  <main>
+  <main id="main">
     <section class="subhero no-print">
       <div class="container">
         <div class="pill">
@@ -52,13 +63,25 @@
               <div class="field full">
                 <label for="sow-track" data-i18n="lbl_preset">KiberLabs Track Preset</label>
                 <select id="sow-track">
-                  <option value="api" selected>FastAPI + HMAC Auth + Docker Gateway</option>
-                  <option value="sieve">E-Commerce Price Intelligence &amp; Margin Sieve</option>
-                  <option value="bot">24/7 Omnichannel Lead Qualification Bot</option>
-                  <option value="rag">Zero-Hallucination B2B Legal/Policy RAG Engine</option>
-                  <option value="invoice">B2B 3-Way Invoice Reconciliation &amp; Hash Ledger</option>
-                  <option value="video">Automated 9:16 FFmpeg &amp; ASS Video Pipeline</option>
+                  <option value="api" selected data-i18n="opt_track_api">FastAPI + HMAC Auth + Docker Gateway</option>
+                  <option value="sieve" data-i18n="opt_track_sieve">E-Commerce Price Intelligence &amp; Margin Sieve</option>
+                  <option value="bot" data-i18n="opt_track_bot">24/7 Omnichannel Lead Qualification Bot</option>
+                  <option value="rag" data-i18n="opt_track_rag">Zero-Hallucination B2B Legal/Policy RAG Engine</option>
+                  <option value="invoice" data-i18n="opt_track_invoice">B2B 3-Way Invoice Reconciliation &amp; Hash Ledger</option>
+                  <option value="video" data-i18n="opt_track_video">Automated 9:16 FFmpeg &amp; ASS Video Pipeline</option>
                 </select>
+              </div>
+              <div class="field full">
+                <label for="sow-tier" data-i18n="lbl_tier">Delivery Tier</label>
+                <select id="sow-tier">
+                  <option value="mvp" data-i18n="tier_mvp">Fast MVP CLI / Core Module (2–5 days)</option>
+                  <option value="production" selected data-i18n="tier_prod">Production Ready + DB + Webhooks</option>
+                  <option value="enterprise" data-i18n="tier_ent">Multi-Source / Custom Integrations</option>
+                </select>
+              </div>
+              <div class="checks-row full">
+                <label><input id="sow-docker" type="checkbox" checked /> <span data-i18n="lbl_docker">Multi-Stage Docker Container (+$150)</span></label>
+                <label><input id="sow-ci" type="checkbox" checked /> <span data-i18n="lbl_ci">GitHub Actions CI Matrix (+$100)</span></label>
               </div>
               <div class="field">
                 <label for="sow-client" data-i18n="lbl_client">Client / Company</label>
@@ -115,7 +138,7 @@
             </div>
           </div>
 
-          <article class="sow-sheet" id="sow-preview" aria-label="Printable Statement of Work preview"></article>
+          <article class="sow-sheet" id="sow-preview" aria-label="Printable Statement of Work preview" aria-live="polite"></article>
         </div>
       </div>
     </section>

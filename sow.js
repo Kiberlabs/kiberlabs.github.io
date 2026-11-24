@@ -3,7 +3,15 @@
  * Supports track presets, editable fixed-price milestones, A4 print layout, and Markdown export.
  */
 
-const I18N = {
+import {
+  convertUsdToCurrency,
+  estimateFixedPriceScope,
+  normalizeCurrency,
+  parseSowQueryParams,
+  USD_TO_EUR,
+} from "./engines.js";
+
+export const I18N = {
   en: {
     nav_sandbox: "Live Sandbox",
     nav_portfolio: "Engines",
@@ -54,6 +62,37 @@ const I18N = {
     ],
     sig_client: "Authorized Client Approval",
     sig_kl: "KiberLabs Engineering · Senior Tech Lead Sign-Off",
+    skip_link: "Skip to main content",
+    lbl_tier: "Delivery Tier",
+    tier_mvp: "Fast MVP CLI / Core Module (2–5 days)",
+    tier_prod: "Production Ready + DB + Webhooks",
+    tier_ent: "Multi-Source / Custom Integrations",
+    lbl_docker: "Multi-Stage Docker Container",
+    lbl_ci: "GitHub Actions CI Matrix",
+    meta_tier: "Delivery Tier",
+    meta_docker: "Docker",
+    meta_ci: "pytest/CI",
+    opt_included: "Included",
+    opt_excluded: "Excluded",
+    opt_track_api: "FastAPI + HMAC Auth + Docker Gateway",
+    opt_track_sieve: "E-Commerce Price Intelligence & Margin Sieve",
+    opt_track_bot: "24/7 Omnichannel Lead Qualification Bot",
+    opt_track_rag: "Zero-Hallucination B2B Legal/Policy RAG Engine",
+    opt_track_invoice: "B2B 3-Way Invoice Reconciliation & Hash Ledger",
+    opt_track_video: "Automated 9:16 FFmpeg & ASS Video Pipeline",
+    ph_ms_name: "Milestone",
+    aria_ms_name: "Milestone name",
+    ph_ms_deliv: "Deliverables",
+    aria_ms_deliv: "Deliverables",
+    aria_ms_amt: "Amount",
+    ph_ms_eta: "ETA",
+    aria_ms_eta: "ETA",
+    btn_del_ms: "Remove",
+    default_client: "Client Organization",
+    default_contact: "Stakeholder",
+    default_project: "Automation Engagement",
+    md_footer: "*Prepared by KiberLabs Engineering · https://kiberlabs.github.io/trust.html*",
+    copy_md_prompt: "Copy Markdown SOW:",
   },
   es: {
     nav_sandbox: "Demo Interactiva",
@@ -105,10 +144,41 @@ const I18N = {
     ],
     sig_client: "Aprobación Autorizada del Cliente",
     sig_kl: "KiberLabs Engineering · Revisión Senior Tech Lead",
+    skip_link: "Saltar al contenido principal",
+    lbl_tier: "Nivel de Entrega",
+    tier_mvp: "MVP Rápido CLI / Módulo Core (2–5 días)",
+    tier_prod: "Listo para Producción + DB + Webhooks",
+    tier_ent: "Multifuente / Integraciones a Medida",
+    lbl_docker: "Contenedor Docker Multi-Stage",
+    lbl_ci: "CI GitHub Actions 3.11/3.12",
+    meta_tier: "Nivel de Entrega",
+    meta_docker: "Docker",
+    meta_ci: "pytest/CI",
+    opt_included: "Incluido",
+    opt_excluded: "Excluido",
+    opt_track_api: "Gateway FastAPI + Auth HMAC + Docker",
+    opt_track_sieve: "Inteligencia de Precios y Filtro de Margen E-Commerce",
+    opt_track_bot: "Bot Omnicanal 24/7 de Cualificación de Leads",
+    opt_track_rag: "Motor RAG B2B Legal/Normativo Sin Alucinaciones",
+    opt_track_invoice: "Conciliación de Facturas 3-Vías y Ledger Hash",
+    opt_track_video: "Pipeline Automatizado 9:16 FFmpeg y Subtítulos .ASS",
+    ph_ms_name: "Hito",
+    aria_ms_name: "Nombre del hito",
+    ph_ms_deliv: "Entregables",
+    aria_ms_deliv: "Entregables",
+    aria_ms_amt: "Importe",
+    ph_ms_eta: "Plazo",
+    aria_ms_eta: "Plazo",
+    btn_del_ms: "Eliminar",
+    default_client: "Organización Cliente",
+    default_contact: "Responsable",
+    default_project: "Proyecto de Automatización",
+    md_footer: "*Preparado por KiberLabs Engineering · https://kiberlabs.github.io/trust.html*",
+    copy_md_prompt: "Copia el SOW en Markdown:",
   },
 };
 
-const PRESETS = {
+export const PRESETS = {
   api: {
     en: {
       title: "Production FastAPI Automation Gateway & Docker Deployment",
@@ -339,282 +409,697 @@ const PRESETS = {
   },
 };
 
-let currentLang = localStorage.getItem("kl_lang") === "es" ? "es" : "en";
-let milestones = [];
+function safeGetLang() {
+  try {
+    return localStorage.getItem("kl_lang") === "es" ? "es" : "en";
+  } catch {
+    return "en";
+  }
+}
 
-function escapeHtml(str) {
+function safeSetLang(lang) {
+  try {
+    localStorage.setItem("kl_lang", lang);
+  } catch {
+    /* ignore storage restrictions */
+  }
+}
+
+export function clampAmount(val) {
+  const n = Number(val);
+  return Number.isFinite(n) && n > 0 ? n : 0;
+}
+
+export function escapeHtml(str) {
   return String(str)
     .replaceAll("&", "&amp;")
     .replaceAll("<", "&lt;")
     .replaceAll(">", "&gt;")
-    .replaceAll('"', "&quot;");
+    .replaceAll('"', "&quot;")
+    .replaceAll("'", "&#39;");
 }
 
-function currencySymbol() {
-  return document.getElementById("sow-currency").value === "EUR" ? "€" : "$";
-}
-
-function fmtMoney(val) {
-  const n = Number(val) || 0;
-  const sym = currencySymbol();
+export function formatMoney(val, currency = "USD") {
+  const n = clampAmount(val);
+  const curr = normalizeCurrency(currency);
   const formatted = n.toLocaleString("en-US", { maximumFractionDigits: 0 });
-  return sym === "€" ? `${formatted}€` : `$${formatted}`;
+  return curr === "EUR" ? `${formatted}€` : `$${formatted}`;
 }
 
-function loadPreset(trackId) {
-  const preset = PRESETS[trackId]?.[currentLang] || PRESETS.api[currentLang];
-  document.getElementById("sow-proj").value = preset.title;
-  document.getElementById("sow-scope").value = preset.scope;
-  document.getElementById("sow-criteria").value = preset.criteria.join("\n");
-  document.getElementById("sow-oos").value = preset.oos.join("\n");
-  milestones = preset.milestones.map((m) => ({ ...m }));
-  renderMilestoneInputs();
-  renderPreview();
-}
-
-function renderMilestoneInputs() {
-  const wrap = document.getElementById("sow-ms-list");
-  wrap.innerHTML = "";
-  milestones.forEach((m, idx) => {
-    const row = document.createElement("div");
-    row.className = "ms-row";
-    row.innerHTML = `
-      <input type="text" data-k="name" value="${escapeHtml(m.name)}" placeholder="Milestone" aria-label="Milestone name" />
-      <input type="text" data-k="deliv" value="${escapeHtml(m.deliv)}" placeholder="Deliverables" aria-label="Deliverables" />
-      <input type="number" data-k="amount" value="${Number(m.amount) || 0}" min="0" step="50" aria-label="Amount" />
-      <input type="text" data-k="eta" value="${escapeHtml(m.eta)}" placeholder="ETA" aria-label="ETA" />
-      <button type="button" class="btn btn-secondary btn-sm" data-del="${idx}" title="Remove">×</button>
-    `;
-    row.querySelectorAll("input").forEach((inp) => {
-      inp.addEventListener("input", () => {
-        const key = inp.dataset.k;
-        milestones[idx][key] = key === "amount" ? Number(inp.value) || 0 : inp.value;
-        renderPreview();
-      });
-    });
-    row.querySelector("[data-del]").addEventListener("click", () => {
-      if (milestones.length <= 1) return;
-      milestones.splice(idx, 1);
-      renderMilestoneInputs();
-      renderPreview();
-    });
-    wrap.appendChild(row);
-  });
-}
-
-function collectState() {
-  const lines = (id) =>
-    document
-      .getElementById(id)
-      .value.split("\n")
-      .map((s) => s.trim())
-      .filter(Boolean);
-  const total = milestones.reduce((acc, m) => acc + (Number(m.amount) || 0), 0);
+export function getAddonLabels(lang = "en", currency = "USD") {
+  const d = I18N[lang === "es" ? "es" : "en"];
+  const curr = normalizeCurrency(currency);
+  const dockerAmt = convertUsdToCurrency(150, curr);
+  const ciAmt = convertUsdToCurrency(100, curr);
   return {
-    client: document.getElementById("sow-client").value.trim() || "Client Organization",
-    contact: document.getElementById("sow-contact").value.trim() || "Stakeholder",
-    project: document.getElementById("sow-proj").value.trim() || "Automation Engagement",
-    ref: document.getElementById("sow-ref").value.trim() || "KL-SOW-2026-01",
-    date: document.getElementById("sow-date").value || "2026-11-22",
-    scope: document.getElementById("sow-scope").value.trim(),
-    criteria: lines("sow-criteria"),
-    oos: lines("sow-oos"),
-    milestones,
-    total,
+    docker: `${d.lbl_docker} (+${formatMoney(dockerAmt, curr)})`,
+    ci: `${d.lbl_ci} (+${formatMoney(ciAmt, curr)})`,
   };
 }
 
-function renderPreview() {
-  const d = I18N[currentLang];
-  const st = collectState();
-  const msRows = st.milestones
-    .map(
-      (m) => `
-      <tr>
-        <td><strong>${escapeHtml(m.name)}</strong></td>
-        <td>${escapeHtml(m.deliv)}</td>
-        <td style="white-space:nowrap;">${escapeHtml(m.eta)}</td>
-        <td class="mono" style="text-align:right;white-space:nowrap;">${fmtMoney(m.amount)}</td>
-      </tr>`
-    )
-    .join("");
-
-  const critHtml = st.criteria.map((c) => `<li>${escapeHtml(c)}</li>`).join("");
-  const oosHtml = st.oos.map((c) => `<li>${escapeHtml(c)}</li>`).join("");
-  const govHtml = d.gov_items.map((g) => `<li>${escapeHtml(g)}</li>`).join("");
-
-  document.getElementById("sow-preview").innerHTML = `
-    <div class="sow-sheet-head">
-      <div class="sow-brand">
-        <img src="assets/kiberlabs_logo_oficial.jpg" alt="KiberLabs Logo" />
-        <div>
-          <div style="font-size:0.74rem;font-weight:700;letter-spacing:0.06em;color:#0369a1;">${escapeHtml(d.doc_type)}</div>
-          <h2>${escapeHtml(st.project)}</h2>
-          <div style="font-size:0.78rem;color:#475569;">${escapeHtml(d.doc_sub)}</div>
-        </div>
-      </div>
-      <div style="text-align:right;font-size:0.8rem;color:#334155;">
-        <div class="mono"><strong>${escapeHtml(st.ref)}</strong></div>
-        <div>${escapeHtml(st.date)}</div>
-      </div>
-    </div>
-
-    <div class="sow-meta-grid">
-      <div><strong>${escapeHtml(d.meta_client)}:</strong> ${escapeHtml(st.client)}</div>
-      <div><strong>${escapeHtml(d.meta_contact)}:</strong> ${escapeHtml(st.contact)}</div>
-      <div><strong>${escapeHtml(d.meta_model)}:</strong> ${escapeHtml(d.meta_model_val)}</div>
-      <div><strong>${escapeHtml(d.meta_total)}:</strong> <span class="mono" style="color:#065f46;font-weight:800;">${fmtMoney(st.total)}</span></div>
-    </div>
-
-    <h3>${escapeHtml(d.h_scope)}</h3>
-    <p style="margin:6px 0;">${escapeHtml(st.scope)}</p>
-
-    <h3>${escapeHtml(d.h_ms)}</h3>
-    <table class="sow-table">
-      <thead>
-        <tr>
-          <th>${escapeHtml(d.th_ms)}</th>
-          <th>${escapeHtml(d.th_deliv)}</th>
-          <th>${escapeHtml(d.th_eta)}</th>
-          <th style="text-align:right;">${escapeHtml(d.th_amt)}</th>
-        </tr>
-      </thead>
-      <tbody>${msRows}</tbody>
-      <tfoot>
-        <tr>
-          <td colspan="3">${escapeHtml(d.total_lbl)}</td>
-          <td class="mono" style="text-align:right;">${fmtMoney(st.total)}</td>
-        </tr>
-      </tfoot>
-    </table>
-
-    <h3>${escapeHtml(d.h_crit)}</h3>
-    <ul class="sow-list">${critHtml}</ul>
-
-    <h3>${escapeHtml(d.h_oos)}</h3>
-    <ul class="sow-list">${oosHtml}</ul>
-
-    <h3>${escapeHtml(d.h_gov)}</h3>
-    <ul class="sow-list">${govHtml}</ul>
-
-    <div class="sow-sigs">
-      <div class="sig-box">
-        <div>${escapeHtml(st.client)} · ${escapeHtml(st.contact)}</div>
-        <div class="sig-line">${escapeHtml(d.sig_client)}</div>
-      </div>
-      <div class="sig-box">
-        <div>KiberLabs Engineering · github.com/Kiberlabs</div>
-        <div class="sig-line">${escapeHtml(d.sig_kl)}</div>
-      </div>
-    </div>
-  `;
+export function getGovItems(lang = "en", st = {}) {
+  const isEs = lang === "es";
+  const includeDocker = st?.includeDocker !== false;
+  const includeCi = st?.includeCi !== false;
+  if (isEs) {
+    return [
+      includeDocker
+        ? "100% Propiedad Intelectual del Cliente: Todo el código fuente, Dockerfiles, esquemas y tests se transfieren al Cliente al abonar cada hito."
+        : "100% Propiedad Intelectual del Cliente: Todo el código fuente, esquemas y tests se transfieren al Cliente al abonar cada hito (sin contenedor Docker en este alcance).",
+      "Aislamiento RGPD y Cero Entrenamiento IA: Los datos permanecen en la infraestructura del Cliente y jamás se envían a modelos públicos de entrenamiento.",
+      includeCi
+        ? "Revisión Senior Tech Lead QA: Cada hito supera CI automatizado pytest (Python 3.11/3.12) y auditoría de Senior Tech Lead antes de la entrega."
+        : "Revisión Senior Tech Lead QA: Cada hito supera la suite local pytest (Python 3.11+) y auditoría de Senior Tech Lead antes de la entrega (CI GitHub Actions excluido).",
+    ];
+  }
+  return [
+    includeDocker
+      ? "100% Client IP Ownership: Full source code, Dockerfiles, schemas, and tests transfer to the Client upon milestone payment."
+      : "100% Client IP Ownership: Full source code, schemas, and tests transfer to the Client upon milestone payment (Docker container excluded from scope).",
+    "GDPR-Ready Isolation & Zero-AI-Training: Client data stays inside Client-owned infrastructure and is never used to train external AI models.",
+    includeCi
+      ? "Senior Tech Lead QA Gate: Every milestone passes automated pytest CI (Python 3.11/3.12) and Senior Tech Lead review before delivery."
+      : "Senior Tech Lead QA Gate: Every milestone passes local pytest verification (Python 3.11+) and Senior Tech Lead review before delivery (GitHub Actions CI excluded).",
+  ];
 }
 
-function buildMarkdownSow() {
-  const d = I18N[currentLang];
-  const st = collectState();
+export function mdEscape(v) {
+  return String(v ?? "")
+    .replaceAll("|", "\\|")
+    .replaceAll("`", "\\`")
+    .replace(/^(\s*)(#{1,6})(?=\s|$)/gm, "$1\\$2")
+    .replace(/^(\s*)(>+)/gm, "$1\\$2")
+    .replace(/^(\s*)(={1,}|-{1,}|\*{3,}|_{3,})(\s*)$/gm, "$1\\$2$3");
+}
+
+export function mdCodeSpan(v) {
+  const clean = String(v ?? "").replace(/[\r\n]+/g, " ");
+  const maxRun = Math.max(0, ...(clean.match(/`+/g) || []).map((m) => m.length));
+  const fence = "`".repeat(maxRun + 1);
+  const pad = clean.startsWith("`") || clean.endsWith("`") ? " " : "";
+  return `${fence}${pad}${clean}${pad}${fence}`;
+}
+
+function adaptPresetText(trackId, lang, opts = {}) {
+  const safeTrack = Object.hasOwn(PRESETS, trackId) ? trackId : "api";
+  const safeLang = lang === "es" ? "es" : "en";
+  const includeDocker = opts.includeDocker !== false;
+  const includeCi = opts.includeCi !== false;
+  const raw = PRESETS[safeTrack][safeLang];
+
+  let title = raw.title;
+  let scope = raw.scope;
+  let criteria = [...raw.criteria];
+  let milestones = raw.milestones.map((m) => ({ ...m }));
+
+  if (!includeDocker) {
+    title = title
+      .replace(" & Docker Deployment", "")
+      .replace(" y Despliegue Docker", "");
+    scope = scope
+      .replace(", and a multi-stage non-root Docker build.", ".")
+      .replace(" e imagen Docker multi-stage non-root.", ".");
+    criteria = criteria.filter((c) => !/docker/i.test(c));
+    milestones = milestones.map((m) => ({
+      ...m,
+      name: m.name
+        .replace("Docker, ", "")
+        .replace(/\s*(?:&|,|\by\b)\s*Docker\b/gi, ""),
+      deliv: m.deliv
+        .replace(/Non-root multi-stage Dockerfile,\s*/gi, "")
+        .replace(/Dockerfile non-root,\s*/gi, "")
+        .replace(/\s*(?:&|,|\by\b)\s*Dockerfiles?\b/gi, "")
+        .replace(/\s*(?:&|,|\by\b)\s*Docker\b/gi, "")
+        .replace(/\s{2,}/g, " ")
+        .trim(),
+    }));
+  }
+
+  if (!includeCi) {
+    criteria = criteria.map((c) =>
+      c
+        .replace(/in GitHub Actions CI across Python 3\.11 and 3\.12/gi, "locally via pytest (Python 3.11+)")
+        .replace(/in GitHub Actions CI across Python 3\.11 & 3\.12/gi, "locally via pytest (Python 3.11+)")
+        .replace(/en GitHub Actions CI \(Python 3\.11 y 3\.12\)/gi, "localmente con pytest (Python 3.11+)")
+        .replace(/in GitHub Actions CI/gi, "locally via pytest")
+        .replace(/en GitHub Actions CI/gi, "localmente con pytest")
+        .replace(/and CI pass on Python 3\.11\/3\.12/gi, "locally on Python 3.11+")
+        .replace(/y CI en Python 3\.11\/3\.12/gi, "localmente en Python 3.11+")
+        .replace(/passes 100% in CI/gi, "passes 100% locally")
+        .replace(/aprobada al 100% en CI/gi, "aprobada al 100% localmente")
+        .replace(/full pytest suite passes in CI/gi, "full pytest suite passes locally")
+        .replace(/CI pytest al 100%/gi, "suite pytest local al 100%")
+    );
+    milestones = milestones.map((m) => {
+      let nextName = m.name
+        .replace(/CI\s*&\s*QA/gi, "QA & Final")
+        .replace(/CI\s+y\s+Entrega\s+QA/gi, "QA y Entrega")
+        .replace(/CI\s+y\s+Entrega/gi, "QA y Entrega")
+        .replace(/&\s*CI\s+Delivery\b/gi, "& QA Delivery")
+        .replace(/\bCI\s+Delivery\b/gi, "QA Delivery");
+      if (/\bQA\b/i.test(nextName)) {
+        nextName = nextName
+          .replace(/\s*&\s*CI\b/gi, " & Final")
+          .replace(/\s+\by\s+CI\b/gi, " y Entrega");
+      } else {
+        nextName = nextName
+          .replace(/\s*&\s*CI\b/gi, " & QA")
+          .replace(/\s+\by\s+CI\b/gi, " y QA");
+      }
+      const nextDeliv = m.deliv
+        .replace(/pytest\s*&\s*GitHub Actions CI/gi, "local pytest & QA")
+        .replace(/pytest\s+y\s+GitHub Actions CI/gi, "pytest local y QA")
+        .replace(/pytest\s*&\s*CI\b/gi, "local pytest & QA")
+        .replace(/pytest CI matrix/gi, "local pytest suite")
+        .replace(/matriz CI pytest/gi, "suite pytest local")
+        .replace(/&\s*GitHub Actions CI/gi, "& local QA")
+        .replace(/\by\s+GitHub Actions CI/gi, "y QA local")
+        .replace(/&\s*CI\b/gi, "& local QA")
+        .replace(/\by\s+entrega\s+CI\b/gi, "y entrega QA local")
+        .replace(/&\s*automated pytest CI/gi, "& local pytest verification")
+        .replace(/\by\s+CI\s+pytest\b/gi, "y verificación pytest local");
+      return {
+        ...m,
+        name: nextName.replace(/\s{2,}/g, " ").trim(),
+        deliv: nextDeliv.replace(/\s{2,}/g, " ").trim(),
+      };
+    });
+  }
+
+  const tier = opts.tier || "production";
+  const currency = normalizeCurrency(opts.currency);
+  const est = estimateFixedPriceScope({
+    track: safeTrack,
+    complexity: tier,
+    includeDocker,
+    includeCi,
+    lang: safeLang,
+    currency,
+  });
+  const m1EtaDays = Math.max(1, Math.ceil(est.days * 0.5));
+  const dayWord = safeLang === "es" ? "Día" : "Day";
+  milestones = milestones.map((m, idx) => ({
+    ...m,
+    eta: `${dayWord} ${idx === 0 ? m1EtaDays : est.days}`,
+    amount: clampAmount(est.milestones[idx] ? est.milestones[idx].amount : m.amount),
+  }));
+
+  return {
+    title,
+    scope,
+    criteria,
+    oos: [...raw.oos],
+    milestones,
+    est,
+  };
+}
+
+export function applyPresetAndLangState(state = {}, opts = {}) {
+  const {
+    track = "api",
+    lang = "en",
+    tier = "production",
+    includeDocker = true,
+    includeCi = true,
+    currency = "USD",
+    dirtyFields = new Set(),
+    hasManualMilestoneEdits = false,
+    preserveCustom = true,
+  } = opts;
+  const nextPreset = adaptPresetText(track, lang, { tier, includeDocker, includeCi, currency });
+  const dirty = dirtyFields instanceof Set ? dirtyFields : new Set(dirtyFields || []);
+
+  const project = preserveCustom && dirty.has("proj") ? state.project : nextPreset.title;
+  const scope = preserveCustom && dirty.has("scope") ? state.scope : nextPreset.scope;
+  const criteria = preserveCustom && dirty.has("criteria") ? state.criteria : nextPreset.criteria;
+  const oos = preserveCustom && dirty.has("oos") ? state.oos : nextPreset.oos;
+
+  let milestones;
+  const existingMs = Array.isArray(state.milestones) ? state.milestones : [];
+  if (!preserveCustom || !hasManualMilestoneEdits || existingMs.length === 0) {
+    milestones = nextPreset.milestones.map((m, idx) => ({ ...m, _presetIdx: idx, _dirty: {} }));
+  } else {
+    milestones = existingMs.map((m) => {
+      const pIdx = m._presetIdx;
+      const p = Number.isInteger(pIdx) && pIdx >= 0 && pIdx < nextPreset.milestones.length
+        ? nextPreset.milestones[pIdx]
+        : null;
+      const mDirty = m._dirty || {};
+      if (!p) return { ...m, _dirty: { ...mDirty } };
+      return {
+        name: mDirty.name ? m.name : p.name,
+        deliv: mDirty.deliv ? m.deliv : p.deliv,
+        eta: mDirty.eta ? m.eta : p.eta,
+        amount: mDirty.amount ? clampAmount(m.amount) : p.amount,
+        _presetIdx: pIdx,
+        _dirty: { ...mDirty },
+      };
+    });
+  }
+
+  return { project, scope, criteria, oos, milestones };
+}
+
+function getTierLabel(lang, tier) {
+  const d = I18N[lang === "es" ? "es" : "en"];
+  if (tier === "mvp") return d.tier_mvp;
+  if (tier === "enterprise") return d.tier_ent;
+  return d.tier_prod;
+}
+
+export function buildMarkdownSowFromState(state = {}, opts = {}) {
+  const lang = opts.lang === "es" || state.lang === "es" ? "es" : "en";
+  const curr = normalizeCurrency(opts.currency ?? state.currency);
+  const tier = opts.tier ?? state.tier ?? "production";
+  const includeDocker = (opts.includeDocker ?? state.includeDocker) !== false;
+  const includeCi = (opts.includeCi ?? state.includeCi) !== false;
+  const d = I18N[lang];
+  const safeMilestones = (Array.isArray(state.milestones) ? state.milestones : []).map((m) => ({
+    ...m,
+    amount: clampAmount(m.amount),
+  }));
+  const total = safeMilestones.reduce((acc, m) => acc + m.amount, 0);
+  const criteriaList = Array.isArray(state.criteria)
+    ? state.criteria
+    : String(state.criteria ?? "").split("\n").map((s) => s.trim()).filter(Boolean);
+  const oosList = Array.isArray(state.oos)
+    ? state.oos
+    : String(state.oos ?? "").split("\n").map((s) => s.trim()).filter(Boolean);
+
+  const mdLine = (v) => mdEscape(String(v ?? "").replace(/[\r\n]+/g, " "));
+  const mdScopeBlock = (v) => mdEscape(String(v ?? "").replace(/\r\n?/g, "\n"));
+  const mdCell = (v) => mdLine(v);
+  const govItems = getGovItems(lang, { includeDocker, includeCi });
+  const dockerStatus = includeDocker ? d.opt_included : d.opt_excluded;
+  const ciStatus = includeCi ? d.opt_included : d.opt_excluded;
+
   const lines = [
     `# ${d.doc_type}`,
-    `## ${st.project}`,
+    `## ${mdLine(state.project || d.default_project)}`,
     "",
-    `- **${d.meta_client}:** ${st.client} (${st.contact})`,
-    `- **${d.meta_ref}:** \`${st.ref}\` | **${d.meta_date}:** ${st.date}`,
-    `- **${d.meta_total}:** **${fmtMoney(st.total)}** (${d.meta_model_val})`,
+    `- **${d.meta_client}:** ${mdLine(state.client || d.default_client)} (${mdLine(state.contact || d.default_contact)})`,
+    `- **${d.meta_ref}:** ${mdCodeSpan(state.ref || "KL-SOW-2026-01")} | **${d.meta_date}:** ${mdLine(state.date || "2026-11-22")}`,
+    `- **${d.meta_total}:** **${formatMoney(total, curr)}** (${curr} · ${d.meta_model_val})`,
+    `- **${d.meta_tier}:** ${mdLine(getTierLabel(lang, tier))} | **${d.meta_docker}:** ${dockerStatus} | **${d.meta_ci}:** ${ciStatus}`,
     "",
     `### ${d.h_scope}`,
-    st.scope,
+    mdScopeBlock(state.scope || ""),
     "",
     `### ${d.h_ms}`,
     `| ${d.th_ms} | ${d.th_deliv} | ${d.th_eta} | ${d.th_amt} |`,
     `| :--- | :--- | :--- | ---: |`,
-    ...st.milestones.map((m) => `| ${m.name} | ${m.deliv} | ${m.eta} | ${fmtMoney(m.amount)} |`),
-    `| **${d.total_lbl}** | | | **${fmtMoney(st.total)}** |`,
+    ...safeMilestones.map((m) => `| ${mdCell(m.name)} | ${mdCell(m.deliv)} | ${mdCell(m.eta)} | ${formatMoney(m.amount, curr)} |`),
+    `| **${d.total_lbl}** | | | **${formatMoney(total, curr)}** |`,
     "",
     `### ${d.h_crit}`,
-    ...st.criteria.map((c) => `- [ ] ${c}`),
+    ...criteriaList.map((c) => `- [ ] ${mdLine(c)}`),
     "",
     `### ${d.h_oos}`,
-    ...st.oos.map((c) => `- ${c}`),
+    ...oosList.map((c) => `- ${mdLine(c)}`),
     "",
     `### ${d.h_gov}`,
-    ...d.gov_items.map((g) => `- ${g}`),
+    ...govItems.map((g) => `- ${g}`),
     "",
     `---`,
-    `*Prepared by KiberLabs Engineering · https://kiberlabs.github.io/trust.html*`,
+    d.md_footer,
   ];
   return lines.join("\n");
 }
 
-function applyLang(lang) {
-  currentLang = lang;
-  localStorage.setItem("kl_lang", lang);
-  document.documentElement.lang = lang;
-  const dict = I18N[lang];
-  document.querySelectorAll("[data-i18n]").forEach((el) => {
-    const key = el.dataset.i18n;
-    if (!dict[key]) return;
-    if (key === "sow_title") el.innerHTML = dict[key];
-    else el.textContent = dict[key];
-  });
+export function initSowApp() {
+  let currentLang = safeGetLang();
+  let activeCurrency = "USD";
+  let milestones = [];
+  let dirtyFields = new Set();
+  let hasManualTextEdits = false;
+  let hasManualMilestoneEdits = false;
+  let isBooted = false;
+
+  const trackEl = document.getElementById("sow-track");
+  const tierEl = document.getElementById("sow-tier");
+  const dockerEl = document.getElementById("sow-docker");
+  const ciEl = document.getElementById("sow-ci");
+  const currEl = document.getElementById("sow-currency");
+  const projEl = document.getElementById("sow-proj");
+  const scopeEl = document.getElementById("sow-scope");
+  const critEl = document.getElementById("sow-criteria");
+  const oosEl = document.getElementById("sow-oos");
+
+  function getScopeOpts(langOverride = currentLang) {
+    return {
+      track: trackEl?.value || "api",
+      lang: langOverride,
+      tier: tierEl?.value || "production",
+      includeDocker: dockerEl?.checked ?? true,
+      includeCi: ciEl?.checked ?? true,
+      currency: normalizeCurrency(currEl?.value || activeCurrency),
+    };
+  }
+
+  function updateAddonLabels(lang = currentLang, currency = activeCurrency) {
+    const labels = getAddonLabels(lang, currency);
+    const dSpan = document.querySelector('[data-i18n="lbl_docker"]');
+    const cSpan = document.querySelector('[data-i18n="lbl_ci"]');
+    if (dSpan) dSpan.textContent = labels.docker;
+    if (cSpan) cSpan.textContent = labels.ci;
+  }
+
+  function readDomTextState() {
+    return {
+      project: projEl?.value ?? "",
+      scope: scopeEl?.value ?? "",
+      criteria: (critEl?.value ?? "").split("\n").map((s) => s.trim()).filter(Boolean),
+      oos: (oosEl?.value ?? "").split("\n").map((s) => s.trim()).filter(Boolean),
+      milestones,
+    };
+  }
+
+  function writeDomTextState(nextState) {
+    if (projEl) projEl.value = nextState.project;
+    if (scopeEl) scopeEl.value = nextState.scope;
+    if (critEl) critEl.value = Array.isArray(nextState.criteria) ? nextState.criteria.join("\n") : String(nextState.criteria ?? "");
+    if (oosEl) oosEl.value = Array.isArray(nextState.oos) ? nextState.oos.join("\n") : String(nextState.oos ?? "");
+    milestones = nextState.milestones;
+  }
+
+  function applyStateTransition(preserveCustom = true) {
+    const opts = getScopeOpts(currentLang);
+    const next = applyPresetAndLangState(readDomTextState(), {
+      ...opts,
+      dirtyFields,
+      hasManualMilestoneEdits,
+      preserveCustom,
+    });
+    writeDomTextState(next);
+    renderMilestoneInputs();
+    renderPreview();
+  }
+
+  function loadPreset(trackId) {
+    if (trackEl && trackId) trackEl.value = trackId;
+    dirtyFields = new Set();
+    hasManualTextEdits = false;
+    hasManualMilestoneEdits = false;
+    applyStateTransition(false);
+  }
+
+  function renderMilestoneInputs() {
+    const d = I18N[currentLang];
+    const wrap = document.getElementById("sow-ms-list");
+    wrap.innerHTML = "";
+    milestones.forEach((m, idx) => {
+      const row = document.createElement("div");
+      row.className = "ms-row";
+      row.innerHTML = `
+        <input type="text" data-k="name" value="${escapeHtml(m.name)}" placeholder="${escapeHtml(d.ph_ms_name)}" aria-label="${escapeHtml(d.aria_ms_name)}" />
+        <input type="text" data-k="deliv" value="${escapeHtml(m.deliv)}" placeholder="${escapeHtml(d.ph_ms_deliv)}" aria-label="${escapeHtml(d.aria_ms_deliv)}" />
+        <input type="number" data-k="amount" value="${clampAmount(m.amount)}" min="0" step="5" aria-label="${escapeHtml(d.aria_ms_amt)}" />
+        <input type="text" data-k="eta" value="${escapeHtml(m.eta)}" placeholder="${escapeHtml(d.ph_ms_eta)}" aria-label="${escapeHtml(d.aria_ms_eta)}" />
+        <button type="button" class="btn btn-secondary btn-sm" data-del="${idx}" title="${escapeHtml(d.btn_del_ms)}" aria-label="${escapeHtml(d.btn_del_ms)}">×</button>
+      `;
+      row.querySelectorAll("input").forEach((inp) => {
+        const markDirty = () => {
+          const key = inp.dataset.k;
+          hasManualMilestoneEdits = true;
+          if (!milestones[idx]._dirty) milestones[idx]._dirty = {};
+          milestones[idx]._dirty[key] = true;
+          milestones[idx][key] = key === "amount" ? clampAmount(inp.value) : inp.value;
+          renderPreview();
+        };
+        inp.addEventListener("input", markDirty);
+        inp.addEventListener("change", markDirty);
+      });
+      row.querySelector("[data-del]").addEventListener("click", () => {
+        if (milestones.length <= 1) return;
+        hasManualMilestoneEdits = true;
+        milestones.splice(idx, 1);
+        renderMilestoneInputs();
+        renderPreview();
+      });
+      wrap.appendChild(row);
+    });
+  }
+
+  function collectState() {
+    const d = I18N[currentLang];
+    const lines = (id) =>
+      document
+        .getElementById(id)
+        .value.split("\n")
+        .map((s) => s.trim())
+        .filter(Boolean);
+    const safeMilestones = milestones.map((m) => ({
+      ...m,
+      amount: clampAmount(m.amount),
+    }));
+    const total = safeMilestones.reduce((acc, m) => acc + m.amount, 0);
+    const opts = getScopeOpts(currentLang);
+    return {
+      client: document.getElementById("sow-client").value.trim() || d.default_client,
+      contact: document.getElementById("sow-contact").value.trim() || d.default_contact,
+      project: document.getElementById("sow-proj").value.trim() || d.default_project,
+      ref: document.getElementById("sow-ref").value.trim() || "KL-SOW-2026-01",
+      date: document.getElementById("sow-date").value || "2026-11-22",
+      scope: document.getElementById("sow-scope").value.trim(),
+      criteria: lines("sow-criteria"),
+      oos: lines("sow-oos"),
+      milestones: safeMilestones,
+      total,
+      tier: opts.tier,
+      includeDocker: opts.includeDocker,
+      includeCi: opts.includeCi,
+      currency: opts.currency,
+    };
+  }
+
+  function renderPreview() {
+    const d = I18N[currentLang];
+    const st = collectState();
+    const msRows = st.milestones
+      .map(
+        (m) => `
+        <tr>
+          <td><strong>${escapeHtml(m.name)}</strong></td>
+          <td>${escapeHtml(m.deliv)}</td>
+          <td style="white-space:nowrap;">${escapeHtml(m.eta)}</td>
+          <td class="mono" style="text-align:right;white-space:nowrap;">${formatMoney(m.amount, st.currency)}</td>
+        </tr>`
+      )
+      .join("");
+
+    const critHtml = st.criteria.map((c) => `<li>${escapeHtml(c)}</li>`).join("");
+    const oosHtml = st.oos.map((c) => `<li>${escapeHtml(c)}</li>`).join("");
+    const govHtml = getGovItems(currentLang, st).map((g) => `<li>${escapeHtml(g)}</li>`).join("");
+    const dockerStatus = st.includeDocker ? d.opt_included : d.opt_excluded;
+    const ciStatus = st.includeCi ? d.opt_included : d.opt_excluded;
+
+    document.getElementById("sow-preview").innerHTML = `
+      <div class="sow-sheet-head">
+        <div class="sow-brand">
+          <img src="assets/kiberlabs_logo_oficial.jpg" alt="KiberLabs Logo" width="46" height="46" />
+          <div>
+            <div style="font-size:0.74rem;font-weight:700;letter-spacing:0.06em;color:#0369a1;">${escapeHtml(d.doc_type)}</div>
+            <h2>${escapeHtml(st.project)}</h2>
+            <div style="font-size:0.78rem;color:#475569;">${escapeHtml(d.doc_sub)}</div>
+          </div>
+        </div>
+        <div style="text-align:right;font-size:0.8rem;color:#334155;">
+          <div class="mono"><strong>${escapeHtml(st.ref)}</strong></div>
+          <div>${escapeHtml(st.date)}</div>
+        </div>
+      </div>
+
+      <div class="sow-meta-grid">
+        <div><strong>${escapeHtml(d.meta_client)}:</strong> ${escapeHtml(st.client)}</div>
+        <div><strong>${escapeHtml(d.meta_contact)}:</strong> ${escapeHtml(st.contact)}</div>
+        <div><strong>${escapeHtml(d.meta_model)}:</strong> ${escapeHtml(d.meta_model_val)}</div>
+        <div><strong>${escapeHtml(d.meta_total)}:</strong> <span class="mono" style="color:#065f46;font-weight:800;">${formatMoney(st.total, st.currency)}</span></div>
+        <div><strong>${escapeHtml(d.meta_tier)}:</strong> ${escapeHtml(getTierLabel(currentLang, st.tier))}</div>
+        <div><strong>${escapeHtml(d.meta_docker)}:</strong> ${escapeHtml(dockerStatus)} · <strong>${escapeHtml(d.meta_ci)}:</strong> ${escapeHtml(ciStatus)}</div>
+      </div>
+
+      <h3>${escapeHtml(d.h_scope)}</h3>
+      <p style="margin:6px 0;">${escapeHtml(st.scope)}</p>
+
+      <h3>${escapeHtml(d.h_ms)}</h3>
+      <table class="sow-table">
+        <thead>
+          <tr>
+            <th>${escapeHtml(d.th_ms)}</th>
+            <th>${escapeHtml(d.th_deliv)}</th>
+            <th>${escapeHtml(d.th_eta)}</th>
+            <th style="text-align:right;">${escapeHtml(d.th_amt)}</th>
+          </tr>
+        </thead>
+        <tbody>${msRows}</tbody>
+        <tfoot>
+          <tr>
+            <td colspan="3">${escapeHtml(d.total_lbl)}</td>
+            <td class="mono" style="text-align:right;">${formatMoney(st.total, st.currency)}</td>
+          </tr>
+        </tfoot>
+      </table>
+
+      <h3>${escapeHtml(d.h_crit)}</h3>
+      <ul class="sow-list">${critHtml}</ul>
+
+      <h3>${escapeHtml(d.h_oos)}</h3>
+      <ul class="sow-list">${oosHtml}</ul>
+
+      <h3>${escapeHtml(d.h_gov)}</h3>
+      <ul class="sow-list">${govHtml}</ul>
+
+      <div class="sow-sigs">
+        <div class="sig-box">
+          <div>${escapeHtml(st.client)} · ${escapeHtml(st.contact)}</div>
+          <div class="sig-line">${escapeHtml(d.sig_client)}</div>
+        </div>
+        <div class="sig-box">
+          <div>KiberLabs Engineering · github.com/Kiberlabs</div>
+          <div class="sig-line">${escapeHtml(d.sig_kl)}</div>
+        </div>
+      </div>
+    `;
+  }
+
+  function buildMarkdownSow() {
+    const st = collectState();
+    return buildMarkdownSowFromState(st, {
+      lang: currentLang,
+      currency: st.currency,
+      tier: st.tier,
+      includeDocker: st.includeDocker,
+      includeCi: st.includeCi,
+    });
+  }
+
+  function applyLang(lang) {
+    currentLang = lang === "es" ? "es" : "en";
+    safeSetLang(currentLang);
+    document.documentElement.lang = currentLang;
+    const dict = I18N[currentLang];
+    document.querySelectorAll("[data-i18n]").forEach((el) => {
+      const key = el.dataset.i18n;
+      if (!dict[key]) return;
+      if (key === "sow_title") el.innerHTML = dict[key];
+      else el.textContent = dict[key];
+    });
+    updateAddonLabels(currentLang, activeCurrency);
+    document.querySelectorAll(".lang-btn").forEach((btn) => {
+      const active = btn.dataset.lang === currentLang;
+      btn.classList.toggle("active", active);
+      btn.setAttribute("aria-pressed", String(active));
+    });
+    if (!isBooted) {
+      loadPreset(trackEl.value);
+    } else {
+      applyStateTransition(true);
+    }
+  }
+
   document.querySelectorAll(".lang-btn").forEach((btn) => {
-    btn.classList.toggle("active", btn.dataset.lang === lang);
+    btn.addEventListener("click", () => applyLang(btn.dataset.lang));
   });
-  loadPreset(document.getElementById("sow-track").value);
-}
 
-document.querySelectorAll(".lang-btn").forEach((btn) => {
-  btn.addEventListener("click", () => applyLang(btn.dataset.lang));
-});
-
-document.getElementById("sow-track").addEventListener("change", (e) => {
-  loadPreset(e.target.value);
-});
-
-["sow-client", "sow-contact", "sow-proj", "sow-ref", "sow-currency", "sow-date", "sow-scope", "sow-criteria", "sow-oos"].forEach(
-  (id) => {
-    document.getElementById(id).addEventListener("input", renderPreview);
-    document.getElementById(id).addEventListener("change", renderPreview);
-  }
-);
-
-document.getElementById("btn-add-ms").addEventListener("click", () => {
-  const n = milestones.length + 1;
-  milestones.push({
-    name: currentLang === "es" ? `H${n} · Hito Adicional` : `M${n} · Additional Milestone`,
-    deliv: currentLang === "es" ? "Entregable verificado + pytest" : "Verified deliverable + pytest",
-    eta: currentLang === "es" ? `Día ${n * 3}` : `Day ${n * 3}`,
-    amount: 250,
+  trackEl?.addEventListener("change", () => {
+    loadPreset(trackEl.value);
   });
-  renderMilestoneInputs();
-  renderPreview();
-});
 
-document.getElementById("btn-print-pdf").addEventListener("click", () => {
-  window.print();
-});
+  ["sow-tier", "sow-docker", "sow-ci"].forEach((id) => {
+    document.getElementById(id)?.addEventListener("change", () => {
+      applyStateTransition(true);
+    });
+  });
 
-document.getElementById("btn-copy-md").addEventListener("click", async () => {
-  const md = buildMarkdownSow();
-  const btn = document.getElementById("btn-copy-md");
-  try {
-    await navigator.clipboard.writeText(md);
-    btn.textContent = I18N[currentLang].copied_ok;
-    setTimeout(() => {
-      btn.textContent = I18N[currentLang].btn_copy_md;
-    }, 1800);
-  } catch {
-    window.prompt("Copy Markdown SOW:", md);
+  currEl?.addEventListener("change", () => {
+    const nextCurrency = normalizeCurrency(currEl.value);
+    if (nextCurrency !== activeCurrency) {
+      if (hasManualMilestoneEdits) {
+        milestones = milestones.map((m) => ({
+          ...m,
+          amount: nextCurrency === "EUR"
+            ? Math.round(clampAmount(m.amount) * USD_TO_EUR)
+            : Math.round(clampAmount(m.amount) / USD_TO_EUR),
+        }));
+      }
+      activeCurrency = nextCurrency;
+      updateAddonLabels(currentLang, activeCurrency);
+      applyStateTransition(true);
+    } else {
+      renderPreview();
+    }
+  });
+
+  [
+    ["sow-proj", "proj"],
+    ["sow-scope", "scope"],
+    ["sow-criteria", "criteria"],
+    ["sow-oos", "oos"],
+  ].forEach(([id, fieldKey]) => {
+    const el = document.getElementById(id);
+    if (!el) return;
+    const markFieldDirty = () => {
+      dirtyFields.add(fieldKey);
+      hasManualTextEdits = true;
+    };
+    el.addEventListener("input", markFieldDirty);
+    el.addEventListener("change", markFieldDirty);
+  });
+
+  ["sow-client", "sow-contact", "sow-proj", "sow-ref", "sow-date", "sow-scope", "sow-criteria", "sow-oos"].forEach(
+    (id) => {
+      document.getElementById(id).addEventListener("input", renderPreview);
+      document.getElementById(id).addEventListener("change", renderPreview);
+    }
+  );
+
+  document.getElementById("btn-add-ms").addEventListener("click", () => {
+    hasManualMilestoneEdits = true;
+    const n = milestones.length + 1;
+    milestones.push({
+      name: currentLang === "es" ? `H${n} · Hito Adicional` : `M${n} · Additional Milestone`,
+      deliv: currentLang === "es" ? "Entregable verificado + pytest" : "Verified deliverable + pytest",
+      eta: currentLang === "es" ? `Día ${n * 3}` : `Day ${n * 3}`,
+      amount: activeCurrency === "EUR" ? convertUsdToCurrency(250, "EUR") : 250,
+      _dirty: { name: true, deliv: true, eta: true, amount: true },
+    });
+    renderMilestoneInputs();
+    renderPreview();
+  });
+
+  document.getElementById("btn-print-pdf").addEventListener("click", () => {
+    window.print();
+  });
+
+  document.getElementById("btn-copy-md").addEventListener("click", async () => {
+    const md = buildMarkdownSow();
+    const btn = document.getElementById("btn-copy-md");
+    try {
+      await navigator.clipboard.writeText(md);
+      btn.textContent = I18N[currentLang].copied_ok;
+      setTimeout(() => {
+        btn.textContent = I18N[currentLang].btn_copy_md;
+      }, 1800);
+    } catch {
+      window.prompt(I18N[currentLang].copy_md_prompt, md);
+    }
+  });
+
+  const bridge = parseSowQueryParams(window.location.search);
+  if (bridge.lang) {
+    currentLang = bridge.lang;
   }
-});
+  activeCurrency = bridge.currency;
+  if (trackEl) trackEl.value = bridge.track;
+  if (tierEl) tierEl.value = bridge.tier;
+  if (dockerEl) dockerEl.checked = bridge.includeDocker;
+  if (ciEl) ciEl.checked = bridge.includeCi;
+  if (currEl) currEl.value = activeCurrency;
 
-const urlParams = new URLSearchParams(window.location.search);
-const paramLang = urlParams.get("lang");
-const paramTrack = urlParams.get("track");
-if (paramLang === "es" || paramLang === "en") {
-  currentLang = paramLang;
-}
-if (paramTrack && PRESETS[paramTrack]) {
-  document.getElementById("sow-track").value = paramTrack;
+  applyLang(currentLang);
+  isBooted = true;
 }
 
-applyLang(currentLang);
+if (typeof document !== "undefined" && typeof window !== "undefined") {
+  initSowApp();
+}
