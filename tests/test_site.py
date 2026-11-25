@@ -509,7 +509,11 @@ def test_security_link_hygiene_and_engine_guard_contracts() -> None:
                 assert "noopener" in rel_tokens, f"Missing rel=noopener on target=_blank link in {page}: {attrs}"
             if el["tag"] == "script":
                 stype = attrs.get("type", "")
-                assert stype in ("module", "application/ld+json"), f"Unexpected script type {stype!r} in {page}"
+                if attrs.get("src") == "https://gc.zgo.at/count.js":
+                    assert attrs.get("data-goatcounter") == "https://kiberlabs.goatcounter.com/count"
+                    assert "async" in attrs
+                else:
+                    assert stype in ("module", "application/ld+json"), f"Unexpected script type {stype!r} in {page}"
 
     engines_js = (ROOT / "engines.js").read_text(encoding="utf-8")
     assert "_IBAN_LEN" in engines_js
