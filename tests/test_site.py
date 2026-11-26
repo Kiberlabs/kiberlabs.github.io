@@ -63,7 +63,7 @@ def test_required_site_files_and_assets_exist() -> None:
             assert (ROOT / rel).exists(), f"Missing local asset referenced in {page}: {rel}"
 
     index_refs = set(re.findall(r'(?:src|href)="(assets/[^"]+)"', (ROOT / "index.html").read_text(encoding="utf-8")))
-    assert len(index_refs) == 8  # logo + 6 covers + animated hero logo
+    assert len(index_refs) == 10  # logo + 8 covers + animated hero logo
 
 
 def test_animated_hero_logo_asset_is_self_contained_and_accessible() -> None:
@@ -79,7 +79,7 @@ def test_animated_hero_logo_asset_is_self_contained_and_accessible() -> None:
 
 
 def test_all_public_repos_and_ci_badges_linked() -> None:
-    """Flow: verify all 6 core engines on index.html and kiberlabs-benchmarks on benchmarks.html carry live CI badges."""
+    """Flow: verify all 8 public engines on index.html and kiberlabs-benchmarks on benchmarks.html carry live CI badges."""
     index_html = (ROOT / "index.html").read_text(encoding="utf-8")
     expected_repos = (
         "ecommerce-price-monitor-sieve",
@@ -88,6 +88,8 @@ def test_all_public_repos_and_ci_badges_linked() -> None:
         "b2b-rag-citation-engine",
         "kiberlabs-automation-api",
         "b2b-invoice-reconciliation-engine",
+        "kiberlabs-benchmarks",
+        "telegram-maintenance-rag-bot",
     )
     for repo in expected_repos:
         assert f"https://github.com/Kiberlabs/{repo}" in index_html
@@ -109,9 +111,17 @@ def test_measured_benchmark_json_schema_and_invariants() -> None:
     assert "timestamp_utc" in data["environment"]
 
     benchmarks = data["benchmarks"]
-    assert len(benchmarks) == 5
+    assert len(benchmarks) == 7
     by_id = {b["id"]: b for b in benchmarks}
-    for bid in ("margin_sieve", "lead_bot_nlu", "rag_fts5_bm25", "gateway_auth_ratelimit", "sqlite_wal_concurrency"):
+    for bid in (
+        "margin_sieve",
+        "lead_bot_nlu",
+        "rag_fts5_bm25",
+        "gateway_auth_ratelimit",
+        "sqlite_wal_concurrency",
+        "maintenance_rag_fts5",
+        "maintenance_update_id_wal",
+    ):
         assert bid in by_id
         b = by_id[bid]
         assert b["ops_per_sec"] > 0
@@ -121,6 +131,12 @@ def test_measured_benchmark_json_schema_and_invariants() -> None:
     assert wal["concurrent_threads"] >= 50
     assert wal["journal_mode"] == "WAL"
     assert wal["lock_errors"] == 0
+
+    mwal = by_id["maintenance_update_id_wal"]["details"]
+    assert mwal["concurrent_threads"] == 16
+    assert mwal["journal_mode"] == "WAL"
+    assert mwal["lock_errors"] == 0
+    assert mwal["max_update_id_bits"] == 62
 
     rt = data["redteam"]
     assert rt["total_payloads"] >= 100
@@ -144,12 +160,15 @@ def test_sow_print_media_rules_present() -> None:
 
 
 def test_conversion_upgrades_tab4_invoice_opengraph_and_sow_bridge() -> None:
-    """Flow: verify Tab 4 Invoice Auditor, invoice estimator track, 7/7 CI badge, OpenGraph tags, and SOW URL query wiring."""
+    """Flow: verify Tab 4 Invoice, Tab 5 Maintenance RAG, estimator tracks, 8/8 CI badge, OpenGraph tags, and SOW URL query wiring."""
     index_html = (ROOT / "index.html").read_text(encoding="utf-8")
     assert 'data-tab="tab-invoice"' in index_html
     assert 'id="tab-invoice"' in index_html
+    assert 'data-tab="tab-maintenance"' in index_html
+    assert 'id="tab-maintenance"' in index_html
     assert '<option value="invoice"' in index_html
-    assert "7 / 7 CI" in index_html
+    assert '<option value="maintenance_rag"' in index_html
+    assert "8 / 8 CI" in index_html
     assert 'property="og:image"' in index_html
     assert 'name="twitter:card"' in index_html
     assert 'id="est-sow-link"' in index_html
@@ -198,9 +217,9 @@ def test_accessibility_landmarks_tabs_and_live_regions() -> None:
 
     tabs = [e for e in idx.elements if e["attrs"].get("role") == "tab"]
     panels = [e for e in idx.elements if e["attrs"].get("role") == "tabpanel"]
-    assert len(tabs) == 4 and len(panels) == 4
+    assert len(tabs) == 5 and len(panels) == 5
     assert sum(1 for t in tabs if t["attrs"].get("aria-selected") == "true") == 1
-    assert sum(1 for t in tabs if t["attrs"].get("aria-selected") == "false") == 3
+    assert sum(1 for t in tabs if t["attrs"].get("aria-selected") == "false") == 4
     panel_ids = {p["attrs"].get("id") for p in panels}
     tab_ids = {t["attrs"].get("id") for t in tabs}
     assert all(t["attrs"].get("aria-controls") in panel_ids for t in tabs)
@@ -210,14 +229,14 @@ def test_accessibility_landmarks_tabs_and_live_regions() -> None:
     assert by_id["bot-input"]["attrs"].get("aria-label")
     assert by_id["bot-log"]["attrs"].get("role") == "log"
     assert by_id["bot-log"]["attrs"].get("aria-live") == "polite"
-    for live_id in ("sieve-badge", "sieve-json", "rag-badge", "rag-json", "bot-badge", "bot-json", "inv-badge", "inv-json", "est-price"):
+    for live_id in ("sieve-badge", "sieve-json", "rag-badge", "rag-json", "bot-badge", "bot-json", "inv-badge", "inv-json", "maint-badge", "maint-json", "est-price"):
         assert by_id[live_id]["attrs"].get("aria-live") == "polite", f"#{live_id} missing aria-live='polite'"
 
     ci_badges = [e for e in idx.elements if e["tag"] == "img" and "badge.svg" in e["attrs"].get("src", "")]
-    assert len(ci_badges) == 6
+    assert len(ci_badges) == 8
     badge_alts = [b["attrs"].get("alt", "") for b in ci_badges]
     assert all(alt and alt != "CI" for alt in badge_alts)
-    assert len(set(badge_alts)) == 6
+    assert len(set(badge_alts)) == 8
 
     app_js = (ROOT / "app.js").read_text(encoding="utf-8")
     assert "ArrowRight" in app_js and "ArrowLeft" in app_js and "aria-selected" in app_js
@@ -248,13 +267,13 @@ def test_seo_metadata_sitemap_robots_and_jsonld() -> None:
         for key in ("twitter:card", "twitter:title", "twitter:description", "twitter:image"):
             assert names.get(key), f"{page} missing {key}"
         if page == "index.html":
-            assert "6 CI-verified" in props["og:description"]
-            assert "7 CI-verified" not in props["og:description"]
+            assert "8 CI-verified" in props["og:description"]
+            assert "6 CI-verified" not in props["og:description"]
             assert len(parsed.jsonld_blocks) == 1
             ld = json.loads("".join(parsed.jsonld_blocks))
             assert ld["@type"] == "Organization"
             assert ld["url"] == "https://kiberlabs.github.io/"
-            assert isinstance(ld.get("sameAs"), list) and len(ld["sameAs"]) >= 7
+            assert isinstance(ld.get("sameAs"), list) and len(ld["sameAs"]) >= 9
 
     robots = (ROOT / "robots.txt").read_text(encoding="utf-8")
     assert "User-agent: *" in robots
@@ -565,3 +584,54 @@ def test_a11y_forms_headings_and_seo_completeness() -> None:
                 eid = str(el["attrs"].get("id", ""))
                 has_aria = bool(el["attrs"].get("aria-label") or el["attrs"].get("aria-labelledby"))
                 assert has_aria or (eid in label_fors) or (eid in wrapped_inputs), f"{form_page} control missing label: {el}"
+
+
+def test_maintenance_rag_simulator_and_sow_bridge_contracts() -> None:
+    """Flow: verify Simulator #5 exports, maintenance_rag SOW preset/HTML wiring, and GoatCounter preservation."""
+    sow_html = (ROOT / "sow.html").read_text(encoding="utf-8")
+    assert '<option value="maintenance_rag"' in sow_html
+
+    sow_js = (ROOT / "sow.js").read_text(encoding="utf-8")
+    assert "maintenance_rag:" in sow_js
+
+    engines_js = (ROOT / "engines.js").read_text(encoding="utf-8")
+    for sym in ("MAINTENANCE_MANUALS", "extractMaintenanceFields", "evaluateMaintenanceRag"):
+        assert sym in engines_js
+
+    for page in HTML_PAGES:
+        html = (ROOT / page).read_text(encoding="utf-8")
+        assert "https://kiberlabs.goatcounter.com/count" in html
+
+    css = (ROOT / "styles.css").read_text(encoding="utf-8")
+    assert "minmax(min(100%, 310px), 1fr)" in css
+    assert "minmax(min(100%, 320px), 1fr)" in css
+
+
+def test_responsive_360_grid_and_print_card_contrast_css() -> None:
+    """Flow: verify 360px grid/input min-width guards and WCAG AA @media print surface/muted contrast rules."""
+    css = (ROOT / "styles.css").read_text(encoding="utf-8")
+    for sel in (
+        ".estimator-grid > *",
+        ".form-grid > *",
+        ".field",
+        ".sow-layout > *",
+        ".sow-editor",
+        ".sow-sheet",
+        ".sow-meta-grid > *",
+        ".repo-grid > *",
+        ".cards-grid-2 > *",
+    ):
+        assert sel in css, f"Missing min-width:0 grid guard selector: {sel}"
+
+    assert "max-width: 100%;" in css
+    assert "@media (max-width: 600px)" in css
+    small_block = css.split("@media (max-width: 600px)", 1)[1].split("@media", 1)[0]
+    assert ".sow-meta-grid" in small_block
+    assert ".sow-table" in small_block
+
+    print_block = css.split("@media print", 1)[1]
+    for sel in (".metric-card", ".panel-card", ".bench-card", ".trust-card", ".adr-card", ".repo-card", ".latency-pills span", ".table-wrap", ".data-table", ".data-table td", ".data-table th", ".status-badge"):
+        assert sel in print_block, f"Missing print surface reset for {sel}"
+    assert "#334155 !important" in print_block
+    assert "#ffffff !important" in print_block
+    assert "#ecfdf5 !important" in print_block

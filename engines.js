@@ -1,6 +1,6 @@
 /**
  * KiberLabs Interactive Browser Engines (Pure ES2023, zero external dependencies).
- * Faithfully mirrors the deterministic Python logic of Repos #1, #2, #4, and #5
+ * Faithfully mirrors the deterministic Python logic of Repos #1, #2, #4, #5, #6, and #8
  * so prospective B2B clients can test real rules live inside kiberlabs.github.io.
  */
 
@@ -58,9 +58,13 @@ const STOPWORDS = new Set([
   "de", "en", "el", "la", "es", "un", "al", "lo", "se", "su", "si", "ni", "ya",
 ]);
 
+const ZERO_WIDTH_RE = /[\u200b-\u200f\u202a-\u202e\u2060\ufeff\u00ad]/g;
+
 /** Fold Unicode diacritics and smart punctuation into lowercase ASCII for bilingual EN/ES matching. */
 export function foldAscii(str) {
   return String(str || "")
+    .replace(ZERO_WIDTH_RE, "")
+    .normalize("NFKC")
     .normalize("NFKD")
     .replace(/[\u0300-\u036f]/g, "")
     .replace(/[\u2018\u2019\u201A\u201B\u2032\u02BC]/g, "'")
@@ -492,6 +496,248 @@ export function evaluateInvoice3Way(input) {
   };
 }
 
+export const MAINTENANCE_MANUALS = [
+  {
+    manual_id: "MAN-CNC402",
+    section: "sec-4.2",
+    equipment_model: "CNC-402",
+    content: "Fault E-404 (Spindle Overheat): Stop spindle feed immediately, verify coolant flow >= 12 L/min, inspect spindle fan relay K4, and cool motor housing below 45 C before resetting alarm E-404.",
+  },
+  {
+    manual_id: "MAN-CNC402",
+    section: "sec-5.1",
+    equipment_model: "CNC-402",
+    content: "Fault E-501 (Axis Servo Overload): Check X/Y ballscrew lubrication pressure and clear chip accumulation around linear encoder strips.",
+  },
+  {
+    manual_id: "MAN-PUMP104",
+    section: "sec-2.3",
+    equipment_model: "PUMP-104",
+    content: "Fault ERR-209 (Cavitation & Pressure Drop / Cavitación): Inspect suction strainer for debris, bleed air from housing vent valve, and confirm inlet pressure exceeds 1.4 bar.",
+  },
+  {
+    manual_id: "MAN-HVAC210",
+    section: "sec-3.1",
+    equipment_model: "HVAC-210",
+    content: "Fault ALM-312 (Chiller Refrigerant Pressure): Check condenser fan breaker F2, inspect evaporator delta-T, and verify refrigerant pressure within 14-18 bar.",
+  },
+];
+
+const MAINT_EQ_PREFIXES = new Set([
+  "CNC", "PUMP", "COMP", "HVAC", "PLC", "VFD", "MTR", "GEN", "BLR",
+  "CONV", "ROB", "CHIL", "CHILLER", "TURB", "VALV", "VALVE", "HX", "PRESS", "MILL", "LATHE",
+]);
+const MAINT_NON_EQ_PREFIXES = new Set([
+  "ERR", "ALM", "FLT", "EC", "FC", "CODE",
+  "ISO", "SEC", "IEC", "DIN", "ANSI", "OSHA", "NFPA", "ASTM", "MAN", "UTF",
+  "EN", "ASME", "IEEE", "GDPR",
+]);
+const MAINT_LEADING_TAG_RE = /^(?:\[[^\]]+\]\s*)+/;
+const MAINT_LABELED_FAULT_RE = /\b(?:(?:fault(?:\s+code)?|error(?:\s+code)?|alarm(?:\s+code)?|c[oó]digo(?:\s+de\s+(?:error|fallo|alarma))?|fallo|alarma)(?:\s*[:=#]\s*|\s+)((?:(?:ERR|ALM|FLT|EC|FC|CODE|[EF])(?:[-_]|[ \t]+)|[A-Z]{1,4}[-_]?)?\d{1,5}[A-Z]?)|(?:err|code|alm|flt)(?:\s*[:=#]\s*((?:(?:ERR|ALM|FLT|EC|FC|CODE|[EF])(?:[-_]|[ \t]+)|[A-Z]{1,4}[-_]?)?\d{1,5}[A-Z]?)|\s+((?:(?:ERR|ALM|FLT|EC|FC|CODE|[EF])(?:[-_]|[ \t]+)|[A-Z]{1,4}[-_]?)\d{1,5}[A-Z]?)))\b/i;
+const MAINT_STANDALONE_FAULT_RE = /\b((?:ERR|ALM|FLT|EC|FC|CODE)(?:[-_]|[ \t]+)?\d{1,5}[A-Z]?|[EF](?:[-_]|[ \t]+)\d{1,5}[A-Z]?|[EF]\d{2,4})\b/i;
+const MAINT_KNOWN_EQ_RE = /\b((CNC|PUMP|COMP|HVAC|PLC|VFD|MTR|GEN|BLR|CONV|ROB|CHILLER|CHIL|TURB|VALVE|VALV|HX|PRESS|MILL|LATHE)(?:[-_]|[ \t]+)?(\d{1,5}[A-Z0-9]*))\b/ig;
+const MAINT_FALLBACK_EQ_RE = /\b([A-Z]{2,8}[-_]\d{1,5}[A-Z0-9]*)\b/g;
+const MAINT_UNICODE_EQ_RE = /(?<![\p{L}\p{N}_])([\p{L}]{2,10}[-_]\d{1,5}[\p{L}\p{N}]*)(?![\p{L}\p{N}_])/gu;
+const MAX_INT64_BIGINT = 9223372036854775807n;
+
+function parseUpdateId(rawUid) {
+  if (typeof rawUid === "bigint") {
+    return rawUid >= 0n && rawUid <= MAX_INT64_BIGINT ? rawUid : null;
+  }
+  if (typeof rawUid === "number") {
+    if (!Number.isInteger(rawUid) || rawUid < 0 || rawUid > 9223372036854775807) return null;
+    return BigInt(rawUid) <= MAX_INT64_BIGINT ? rawUid : null;
+  }
+  if (typeof rawUid === "string") {
+    const trimmed = rawUid.trim();
+    if (!/^\d+$/.test(trimmed)) return null;
+    const bi = BigInt(trimmed);
+    if (bi > MAX_INT64_BIGINT) return null;
+    return bi <= BigInt(Number.MAX_SAFE_INTEGER) ? Number(bi) : bi;
+  }
+  return null;
+}
+
+function normCode(raw) {
+  return String(raw || "").trim().toUpperCase().replace(/[\s_]+/g, "-");
+}
+
+function prefixAlpha(code) {
+  const m = String(code || "").match(/^([\p{L}]+)/u);
+  return m ? m[1] : "";
+}
+
+/** Deterministic bilingual EN/ES industrial maintenance field extraction mirroring Repo #8. */
+export function extractMaintenanceFields(text) {
+  const clean = String(text ?? "")
+    .replaceAll("\u0000", "")
+    .replace(ZERO_WIDTH_RE, "")
+    .normalize("NFKC");
+  if (!clean.trim()) {
+    return { equipment_id: "UNKNOWN", fault_code: "NONE", symptom: "unspecified", severity: "MEDIUM" };
+  }
+
+  let faultCode = "NONE";
+  const labeledMatch = clean.match(MAINT_LABELED_FAULT_RE);
+  if (labeledMatch) {
+    const rawFault = labeledMatch[1] || labeledMatch[2] || labeledMatch[3];
+    if (rawFault) {
+      const cand = normCode(rawFault);
+      if (!MAINT_EQ_PREFIXES.has(prefixAlpha(cand))) faultCode = cand;
+    }
+  }
+  if (faultCode === "NONE") {
+    const standMatch = clean.match(MAINT_STANDALONE_FAULT_RE);
+    if (standMatch) faultCode = normCode(standMatch[1]);
+  }
+
+  const bodyNoTags = clean.replace(MAINT_LEADING_TAG_RE, "");
+  let equipmentId = "UNKNOWN";
+  for (const m of bodyNoTags.matchAll(MAINT_KNOWN_EQ_RE)) {
+    const cand = `${m[2].toUpperCase()}-${m[3].toUpperCase()}`;
+    if (cand !== faultCode && !MAINT_NON_EQ_PREFIXES.has(prefixAlpha(cand))) {
+      equipmentId = cand;
+      break;
+    }
+  }
+  if (equipmentId === "UNKNOWN") {
+    for (const m of bodyNoTags.matchAll(MAINT_FALLBACK_EQ_RE)) {
+      const cand = normCode(m[1]);
+      if (cand !== faultCode && !MAINT_NON_EQ_PREFIXES.has(prefixAlpha(cand))) {
+        equipmentId = cand;
+        break;
+      }
+    }
+  }
+
+  const folded = foldAscii(clean);
+  let severity = "MEDIUM";
+  if (/\b(critical|emergency|shutdown|stopped|tripped|trip|fire|smoke|hazard|critico|critica|emergencia|parada|incendio|humo)\b/.test(folded)) {
+    severity = "CRITICAL";
+  } else if (/\b(urgent|overheating|overheat|leaking|leak|pressure\s+drop|high|severe|failed|failure|breakdown|urgente|sobrecalentamiento|fuga|grave|averia|alta)\b/.test(folded)) {
+    severity = "HIGH";
+  } else if (/\b(minor|low|routine|cosmetic|scheduled|inspection|preventive|menor|rutina|preventivo|preventiva|inspeccion|baja)\b/.test(folded)) {
+    severity = "LOW";
+  }
+
+  const symptom = bodyNoTags.trim().replace(/\s+/g, " ").slice(0, 240) || "unspecified";
+  return { equipment_id: equipmentId, fault_code: faultCode, symptom, severity };
+}
+
+function containsMaintIdentifier(foldedText, ident) {
+  const segs = foldAscii(ident).match(/[\p{L}]+|[0-9]+/gu);
+  if (!segs || segs.length === 0) return false;
+  const pat = `(?<![\\p{L}\\p{N}])${segs.map((s) => s.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")).join("[-_\\s]*")}(?![\\p{L}\\p{N}])`;
+  return new RegExp(pat, "u").test(foldedText);
+}
+
+/** Grounded Telegram Maintenance & Manual FTS5 RAG evaluator mirroring Repo #8. */
+export function evaluateMaintenanceRag(input = {}) {
+  const src = input && typeof input === "object" ? input : {};
+  const rawUid = src.updateId ?? 1001;
+  const updateId = parseUpdateId(rawUid);
+  const jsonUid = typeof updateId === "bigint" ? String(updateId) : updateId;
+  const text = String(src.text ?? "").replaceAll("\u0000", "").replace(ZERO_WIDTH_RE, "").normalize("NFKC");
+  const seen = src.seenUpdateIds instanceof Set
+    ? src.seenUpdateIds
+    : new Set(Array.isArray(src.seenUpdateIds) ? src.seenUpdateIds : []);
+
+  if (updateId === null) {
+    return {
+      status: "rejected",
+      update_id: null,
+      deduplicated: false,
+      refused: true,
+      extraction: extractMaintenanceFields(""),
+      citations: [],
+      answer: "INVALID_PAYLOAD: update_id must be a non-negative integer.",
+    };
+  }
+
+  if (!text.trim()) {
+    return {
+      status: "rejected",
+      update_id: jsonUid,
+      deduplicated: false,
+      refused: true,
+      extraction: extractMaintenanceFields(""),
+      citations: [],
+      answer: "INVALID_PAYLOAD: message.text must be non-empty.",
+    };
+  }
+
+  const extraction = extractMaintenanceFields(text);
+  if (seen.has(updateId)) {
+    return {
+      status: "duplicate",
+      update_id: jsonUid,
+      deduplicated: true,
+      refused: false,
+      extraction,
+      citations: [],
+      answer: `Duplicate update_id=${updateId} ignored.`,
+    };
+  }
+  seen.add(updateId);
+
+  const queryTokens = [...new Set((foldAscii(text).match(/[a-z0-9]+/g) || []).filter((t) => (t.length >= 2 || /^\d+$/.test(t)) && !STOPWORDS.has(t)))];
+  const eqTarget = extraction.equipment_id !== "UNKNOWN" ? extraction.equipment_id : "";
+  const faultTarget = extraction.fault_code !== "NONE" ? extraction.fault_code : "";
+  const bodyNoTags = text.replace(MAINT_LEADING_TAG_RE, "");
+  const freeEqTargets = [];
+  for (const m of bodyNoTags.matchAll(MAINT_UNICODE_EQ_RE)) {
+    const cand = normCode(m[1]);
+    if (cand !== faultTarget && !MAINT_NON_EQ_PREFIXES.has(prefixAlpha(cand)) && !freeEqTargets.includes(cand)) {
+      freeEqTargets.push(cand);
+    }
+  }
+  const allEqTargets = eqTarget ? [eqTarget, ...freeEqTargets.filter((c) => c !== eqTarget)] : freeEqTargets;
+
+  const hits = [];
+  for (const ch of MAINTENANCE_MANUALS) {
+    const searchable = `${ch.equipment_model} ${ch.manual_id} ${ch.section} ${ch.content}`;
+    const foldedSearch = foldAscii(searchable);
+    if (allEqTargets.length > 0 && !allEqTargets.every((tgt) => containsMaintIdentifier(foldedSearch, tgt))) continue;
+    if (faultTarget && !containsMaintIdentifier(foldedSearch, faultTarget)) continue;
+
+    const docTokens = new Set(foldedSearch.match(/[a-z0-9]+/g) || []);
+    let matched = 0;
+    for (const tok of queryTokens) {
+      if (docTokens.has(tok) || containsMaintIdentifier(foldedSearch, tok)) matched += 1;
+    }
+    const overlap = queryTokens.length > 0 ? Number((matched / queryTokens.length).toFixed(4)) : 0;
+    if (matched > 0 && overlap >= 0.3) {
+      hits.push({ ...ch, overlap });
+    }
+  }
+
+  hits.sort((a, b) => b.overlap - a.overlap);
+  if (hits.length === 0) {
+    return {
+      status: "processed",
+      update_id: jsonUid,
+      deduplicated: false,
+      refused: true,
+      extraction,
+      citations: [],
+      answer: "INSUFFICIENT_EVIDENCE: No verified manual section matches the requested equipment or fault.",
+    };
+  }
+
+  const top = hits.slice(0, 2);
+  const citations = [...new Set(top.map((h) => `[${h.manual_id}#${h.section}]`))];
+  const answer = top.map((h) => `${h.content} [${h.manual_id}#${h.section}]`).join("\n");
+  return {
+    status: "processed",
+    update_id: jsonUid,
+    deduplicated: false,
+    refused: false,
+    extraction,
+    citations,
+    answer,
+  };
+}
+
 export const USD_TO_EUR = 0.90;
 
 export function normalizeCurrency(currency) {
@@ -507,7 +753,9 @@ export function convertUsdToCurrency(usd, currency = "USD") {
 /** Fixed-price milestone estimator for B2B clients. */
 export function estimateFixedPriceScope(input = {}) {
   const src = input && typeof input === "object" ? input : {};
-  const { track, complexity, includeDocker, includeCi, lang = "en", currency = "USD" } = src;
+  const { track, complexity, lang = "en", currency = "USD" } = src;
+  const includeDocker = toBool(src.includeDocker);
+  const includeCi = toBool(src.includeCi);
   const activeCurrency = normalizeCurrency(currency);
   const baseMap = {
     sieve: { label: "Web Scraping & Price Intelligence Sieve", labelEs: "Scraping Web e Inteligencia de Precios", usd: 450, days: 3 },
@@ -516,6 +764,7 @@ export function estimateFixedPriceScope(input = {}) {
     rag: { label: "Zero-Hallucination B2B RAG & Citation Engine", labelEs: "Motor RAG B2B Sin Alucinaciones con Citas", usd: 500, days: 4 },
     api: { label: "Production FastAPI + Auth + Rate-Limit Gateway", labelEs: "Gateway FastAPI en Producción + Auth + Rate-Limit", usd: 700, days: 5 },
     invoice: { label: "B2B 3-Way Invoice Reconciliation & Hash Ledger", labelEs: "Conciliación de Facturas 3-Vías y Ledger Hash", usd: 750, days: 5 },
+    maintenance_rag: { label: "Telegram Maintenance Log & Manual FTS5 RAG Bot", labelEs: "Bot Telegram de Mantenimiento y RAG de Manuales FTS5", usd: 600, days: 4 },
   };
   const multMap = { mvp: 1.0, production: 1.45, enterprise: 2.0 };
   const base = Object.hasOwn(baseMap, track) ? baseMap[track] : baseMap.api;
@@ -558,7 +807,7 @@ export function estimateFixedPriceScope(input = {}) {
   };
 }
 
-const VALID_TRACKS = new Set(["api", "sieve", "bot", "rag", "invoice", "video"]);
+const VALID_TRACKS = new Set(["api", "sieve", "bot", "rag", "invoice", "video", "maintenance_rag"]);
 const VALID_TIERS = new Set(["mvp", "production", "enterprise"]);
 
 /** Parse and validate Estimator -> SOW URL query parameters with safe defaults matching index.html. */
@@ -569,7 +818,7 @@ export function parseSowQueryParams(search = "") {
   const rawTier = params.get("tier");
   const parseBool = (key, fallback) => {
     if (!params.has(key)) return fallback;
-    const v = String(params.get(key)).toLowerCase();
+    const v = String(params.get(key)).trim().toLowerCase();
     return v === "1" || v === "true";
   };
   return {

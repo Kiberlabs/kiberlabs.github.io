@@ -209,8 +209,8 @@ function renderReport(report) {
       ? (currentLang === "es" ? "0 ERRORES DE BLOQUEO · VERIFICADO" : "0 LOCK ERRORS · VERIFIED")
       : `${wd.lock_errors} ${currentLang === "es" ? "ERRORES DE BLOQUEO" : "LOCK ERRORS"}`;
     document.getElementById("wal-summary").textContent = currentLang === "es"
-      ? `${wd.concurrent_threads} hilos concurrentes ejecutaron ${fmtNum(wd.writes_committed)} commits INSERT y ${fmtNum(wd.reads_completed)} lecturas SELECT simultáneas en modo ${wd.journal_mode} con busy_timeout=10000ms. La auditoría final confirmó ${fmtNum(wd.persisted_rows)} filas persistidas y ${wd.lock_errors} errores de bloqueo.`
-      : `${wd.concurrent_threads} concurrent worker threads executed ${fmtNum(wd.writes_committed)} SQLite INSERT commits and ${fmtNum(wd.reads_completed)} SELECT queries simultaneously in ${wd.journal_mode} mode with busy_timeout=10000ms. Final row audit confirmed ${fmtNum(wd.persisted_rows)} persisted rows and ${wd.lock_errors} database-is-locked errors.`;
+      ? `${wd.concurrent_threads} hilos concurrentes ejecutaron ${fmtNum(wd.writes_committed)} commits INSERT y ${fmtNum(wd.reads_completed)} lecturas SELECT simultáneas en modo ${wd.journal_mode} con busy_timeout=5000ms. La auditoría final confirmó ${fmtNum(wd.persisted_rows)} filas persistidas y ${wd.lock_errors} errores de bloqueo.`
+      : `${wd.concurrent_threads} concurrent worker threads executed ${fmtNum(wd.writes_committed)} SQLite INSERT commits and ${fmtNum(wd.reads_completed)} SELECT queries simultaneously in ${wd.journal_mode} mode with busy_timeout=5000ms. Final row audit confirmed ${fmtNum(wd.persisted_rows)} persisted rows and ${wd.lock_errors} database-is-locked errors.`;
     document.getElementById("wal-pills").innerHTML = `
       <span>threads: <strong>${wd.concurrent_threads}</strong></span>
       <span>journal_mode: <strong>${escapeHtml(wd.journal_mode)}</strong></span>

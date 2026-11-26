@@ -79,6 +79,7 @@ export const I18N = {
     opt_track_bot: "24/7 Omnichannel Lead Qualification Bot",
     opt_track_rag: "Zero-Hallucination B2B Legal/Policy RAG Engine",
     opt_track_invoice: "B2B 3-Way Invoice Reconciliation & Hash Ledger",
+    opt_track_maintenance: "Telegram Maintenance & Manual FTS5 RAG Bot",
     opt_track_video: "Automated 9:16 FFmpeg & ASS Video Pipeline",
     ph_ms_name: "Milestone",
     aria_ms_name: "Milestone name",
@@ -161,6 +162,7 @@ export const I18N = {
     opt_track_bot: "Bot Omnicanal 24/7 de Cualificación de Leads",
     opt_track_rag: "Motor RAG B2B Legal/Normativo Sin Alucinaciones",
     opt_track_invoice: "Conciliación de Facturas 3-Vías y Ledger Hash",
+    opt_track_maintenance: "Bot Telegram de Mantenimiento y RAG FTS5",
     opt_track_video: "Pipeline Automatizado 9:16 FFmpeg y Subtítulos .ASS",
     ph_ms_name: "Hito",
     aria_ms_name: "Nombre del hito",
@@ -366,6 +368,44 @@ export const PRESETS = {
       milestones: [
         { name: "H1 · Parsers y Conciliación 3-Vías", deliv: "Parsers JSON/XML/OCR, IBAN MOD-97 y motor de riesgo 0-100", eta: "Día 3", amount: 700 },
         { name: "H2 · Ledger SHA-256, Panel y CI", deliv: "Ledger WAL inmutable, dashboard FastAPI HMAC, CSV, pytest y Docker", eta: "Día 7", amount: 700 },
+      ],
+    },
+  },
+  maintenance_rag: {
+    en: {
+      title: "Telegram Industrial Maintenance Log & Manual FTS5 RAG Bot",
+      scope: "Build a deterministic Python 3.11+ Telegram maintenance intake and SQLite WAL + FTS5 manual finder with atomic 64-bit update_id deduplication, bilingual EN/ES equipment/fault extraction, strict [manual_id#section] inline citations, and mandatory INSUFFICIENT_EVIDENCE abstention.",
+      criteria: [
+        "Atomic BEGIN IMMEDIATE + ON CONFLICT(update_id) dedup prevents duplicate webhook replays.",
+        "Bilingual EN/ES extractor isolates fault_code before equipment_id and ignores ISO/IEC norm tags.",
+        "Every grounded answer attaches [manual_id#section] citations or returns INSUFFICIENT_EVIDENCE.",
+        "Full pytest suite passes in GitHub Actions CI across Python 3.11 and 3.12.",
+      ],
+      oos: [
+        "Paid third-party CMMS/SAP connector licenses or cloud Telegram bot hosting fees.",
+        "Custom OCR digitization of unscanned legacy paper schematics beyond structured manual imports.",
+      ],
+      milestones: [
+        { name: "M1 · WAL Dedup & EN/ES Extractor", deliv: "SQLite WAL store, 64-bit update_id idempotency & fault/asset parser", eta: "Day 2", amount: 500 },
+        { name: "M2 · FTS5 Manual RAG, CLI & CI", deliv: "Sanitized FTS5 retriever, inline citations, pytest & GitHub Actions CI", eta: "Day 4", amount: 500 },
+      ],
+    },
+    es: {
+      title: "Bot Telegram de Mantenimiento Industrial y RAG FTS5 de Manuales",
+      scope: "Construir un servicio determinista en Python 3.11+ para ingesta de partes de mantenimiento por Telegram y búsqueda en manuales con SQLite WAL + FTS5, deduplicación atómica por update_id de 64 bits, extracción bilingüe ES/EN, citas [manual_id#section] y abstención INSUFFICIENT_EVIDENCE.",
+      criteria: [
+        "Deduplicación atómica BEGIN IMMEDIATE + ON CONFLICT(update_id) bloquea replays de webhooks.",
+        "Extractor bilingüe ES/EN separa fault_code antes de equipment_id e ignora tags ISO/IEC.",
+        "Toda respuesta validada adjunta citas [manual_id#section] o devuelve INSUFFICIENT_EVIDENCE.",
+        "Suite pytest aprobada al 100% en GitHub Actions CI (Python 3.11 y 3.12).",
+      ],
+      oos: [
+        "Licencias de conectores CMMS/SAP propietarios o alojamiento cloud del bot Telegram.",
+        "Digitalización OCR de planos en papel no estructurados fuera de la ingesta estándar de manuales.",
+      ],
+      milestones: [
+        { name: "H1 · WAL Dedup y Extractor ES/EN", deliv: "Almacén SQLite WAL, idempotencia update_id 64-bit y parser de fallos", eta: "Día 2", amount: 500 },
+        { name: "H2 · RAG FTS5, CLI y CI", deliv: "Buscador FTS5 sanitizado, citas inline, pytest y GitHub Actions CI", eta: "Día 4", amount: 500 },
       ],
     },
   },

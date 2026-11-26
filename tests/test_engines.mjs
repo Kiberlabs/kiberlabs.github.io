@@ -1,11 +1,14 @@
 import assert from "node:assert/strict";
 import {
+  MAINTENANCE_MANUALS,
   SAMPLE_CORPUS,
   USD_TO_EUR,
   convertUsdToCurrency,
   estimateFixedPriceScope,
   evaluateInvoice3Way,
+  evaluateMaintenanceRag,
   evaluateMarginSieve,
+  extractMaintenanceFields,
   parseSowQueryParams,
   runGroundedRagQuery,
   stepLeadBotSession,
@@ -306,7 +309,7 @@ assert.deepEqual(eurBridge, {
   includeCi: false,
   currency: "EUR",
 });
-for (const track of ["api", "sieve", "bot", "rag", "invoice", "video"]) {
+for (const track of ["api", "sieve", "bot", "rag", "invoice", "video", "maintenance_rag"]) {
   for (const complexity of ["mvp", "production", "enterprise"]) {
     for (const includeDocker of [false, true]) {
       for (const includeCi of [false, true]) {
@@ -836,7 +839,7 @@ assert.equal(convertUsdToCurrency(100, "EUR"), 90);
 assert.equal(convertUsdToCurrency(150, "USD"), 150);
 
 let comboCount = 0;
-for (const track of ["api", "sieve", "bot", "rag", "invoice", "video"]) {
+for (const track of ["api", "sieve", "bot", "rag", "invoice", "video", "maintenance_rag"]) {
   for (const complexity of ["mvp", "production", "enterprise"]) {
     for (const includeDocker of [false, true]) {
       for (const includeCi of [false, true]) {
@@ -870,7 +873,7 @@ for (const track of ["api", "sieve", "bot", "rag", "invoice", "video"]) {
     }
   }
 }
-assert.equal(comboCount, 288);
+assert.equal(comboCount, 336);
 
 // Markdown export unchecked Docker/CI & CommonMark escaping
 for (const lang of ["en", "es"]) {
@@ -959,8 +962,8 @@ for (const lang of ["en", "es"]) {
   assert.ok(noAddonsPreset.criteria.every((c) => !/docker|github actions/i.test(c)));
   assert.ok(noAddonsPreset.milestones.every((m) => !/docker|ci matrix/i.test(m.deliv)));
 
-  // Exhaustive 6 tracks x 2 langs x 4 flag combinations (Docker/CI leak & duplication sweep)
-  for (const track of ["api", "sieve", "bot", "rag", "invoice", "video"]) {
+  // Exhaustive 7 tracks x 2 langs x 4 flag combinations (Docker/CI leak & duplication sweep)
+  for (const track of ["api", "sieve", "bot", "rag", "invoice", "video", "maintenance_rag"]) {
     for (const lang of ["en", "es"]) {
       for (const includeDocker of [false, true]) {
         for (const includeCi of [false, true]) {
@@ -1124,4 +1127,138 @@ const invStrFalseDup = evaluateInvoice3Way({
 assert.equal(invStrFalseDup.verdict, "PASS");
 assert.equal(invStrFalseDup.risk_score, 0);
 
-console.log("JS_ENGINES_OK", { okScore: okSku.score, ragHits: ragEn.citations.length, invPass: invPass.verdict, estUsd: est.totalUsd });
+// 19. Simulator #5 (Maintenance RAG EN/ES, norm-tag isolation, update_id dedup) & ?track=maintenance_rag SOW bridge
+assert.ok(MAINTENANCE_MANUALS.length >= 4);
+
+const extEn = extractMaintenanceFields("CNC-402 fault E-404 spindle overheat urgent");
+assert.equal(extEn.equipment_id, "CNC-402");
+assert.equal(extEn.fault_code, "E-404");
+assert.equal(extEn.severity, "HIGH");
+
+const extEsNorm = extractMaintenanceFields("[ISO-9001] PUMP-104 fallo ERR-209 cavitación parada crítica");
+assert.equal(extEsNorm.equipment_id, "PUMP-104");
+assert.equal(extEsNorm.fault_code, "ERR-209");
+assert.equal(extEsNorm.severity, "CRITICAL");
+
+const seenIds = new Set();
+const mHappy = evaluateMaintenanceRag({
+  updateId: 1001,
+  text: "CNC-402 fault E-404 spindle overheat urgent",
+  seenUpdateIds: seenIds,
+});
+assert.equal(mHappy.status, "processed");
+assert.equal(mHappy.deduplicated, false);
+assert.equal(mHappy.refused, false);
+assert.deepEqual(mHappy.citations, ["[MAN-CNC402#sec-4.2]"]);
+
+const mDup = evaluateMaintenanceRag({
+  updateId: 1001,
+  text: "CNC-402 fault E-404 spindle overheat urgent",
+  seenUpdateIds: seenIds,
+});
+assert.equal(mDup.status, "duplicate");
+assert.equal(mDup.deduplicated, true);
+assert.equal(mDup.citations.length, 0);
+
+const mEsGrounded = evaluateMaintenanceRag({
+  updateId: 1002,
+  text: "[ISO-9001] PUMP-104 fallo ERR-209 cavitación urgente",
+  seenUpdateIds: seenIds,
+});
+assert.equal(mEsGrounded.refused, false);
+assert.deepEqual(mEsGrounded.citations, ["[MAN-PUMP104#sec-2.3]"]);
+
+const mAbstain = evaluateMaintenanceRag({
+  updateId: 1003,
+  text: "TURB-999 fault ERR-901 bearing vibration critical",
+  seenUpdateIds: seenIds,
+});
+assert.equal(mAbstain.status, "processed");
+assert.equal(mAbstain.refused, true);
+assert.equal(mAbstain.citations.length, 0);
+assert.ok(mAbstain.answer.startsWith("INSUFFICIENT_EVIDENCE"));
+
+const mBadUid = evaluateMaintenanceRag({
+  updateId: -1,
+  text: "CNC-402 fault E-404",
+  seenUpdateIds: seenIds,
+});
+assert.equal(mBadUid.status, "rejected");
+assert.equal(mBadUid.refused, true);
+
+const maintBridgeFalse = parseSowQueryParams("?track=maintenance_rag&lang=es&tier=mvp&docker=false&ci=false&currency=EUR");
+assert.deepEqual(maintBridgeFalse, {
+  track: "maintenance_rag",
+  lang: "es",
+  tier: "mvp",
+  includeDocker: false,
+  includeCi: false,
+  currency: "EUR",
+});
+assert.equal(SOW_I18N.en.opt_track_maintenance.length > 0, true);
+assert.equal(SOW_I18N.es.opt_track_maintenance.length > 0, true);
+assert.equal(SOW_PRESETS.maintenance_rag.en.milestones.length, 2);
+assert.equal(SOW_PRESETS.maintenance_rag.es.milestones.length, 2);
+
+// 20. Round 1 regressions: 64-bit update_id, homoglyph/ZWSP/fullwidth maintenance parity, norm prefixes, Boolean("false") scope trap
+const m64 = evaluateMaintenanceRag({
+  updateId: 2 ** 61 + 700000,
+  text: "CNC-402 E-404 spindle overheat",
+  seenUpdateIds: seenIds,
+});
+assert.equal(m64.status, "processed");
+assert.equal(m64.refused, false);
+assert.deepEqual(m64.citations, ["[MAN-CNC402#sec-4.2]"]);
+
+const mBigInt = evaluateMaintenanceRag({
+  updateId: 9223372036854775807n,
+  text: "CNC-402 E-404 spindle overheat",
+  seenUpdateIds: seenIds,
+});
+assert.equal(mBigInt.status, "processed");
+assert.equal(mBigInt.update_id, "9223372036854775807");
+
+const mOverInt64 = evaluateMaintenanceRag({
+  updateId: 9223372036854775808n,
+  text: "CNC-402 E-404",
+  seenUpdateIds: seenIds,
+});
+assert.equal(mOverInt64.status, "rejected");
+
+const mCyrillicEq = evaluateMaintenanceRag({
+  updateId: 2001,
+  text: "\u0421N\u0421-402 fault E-404",
+  seenUpdateIds: seenIds,
+});
+assert.equal(mCyrillicEq.refused, true);
+assert.ok(mCyrillicEq.answer.startsWith("INSUFFICIENT_EVIDENCE"));
+
+const mZwspEq = evaluateMaintenanceRag({
+  updateId: 2002,
+  text: "TURB\u200b-402 spindle",
+  seenUpdateIds: seenIds,
+});
+assert.equal(mZwspEq.extraction.equipment_id, "TURB-402");
+assert.equal(mZwspEq.refused, true);
+
+const mFullwidthEq = evaluateMaintenanceRag({
+  updateId: 2003,
+  text: "\uff23\uff2e\uff23-402 E-404 spindle",
+  seenUpdateIds: seenIds,
+});
+assert.equal(mFullwidthEq.extraction.equipment_id, "CNC-402");
+assert.equal(mFullwidthEq.refused, false);
+
+const extNormNotEq = extractMaintenanceFields("Check EN-1090 ASME-1 IEEE-802 GDPR-33 compliance");
+assert.equal(extNormNotEq.equipment_id, "UNKNOWN");
+
+const estStrFalse = estimateFixedPriceScope({
+  track: "maintenance_rag",
+  complexity: "mvp",
+  includeDocker: "false",
+  includeCi: "false",
+});
+assert.equal(estStrFalse.totalUsd, 600);
+assert.equal(estStrFalse.days, 4);
+
+console.log("JS_ENGINES_OK", { okScore: okSku.score, ragHits: ragEn.citations.length, invPass: invPass.verdict, maintHits: mHappy.citations.length, estUsd: est.totalUsd });

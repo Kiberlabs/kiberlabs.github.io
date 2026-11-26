@@ -9,7 +9,7 @@
   <meta property="og:type" content="website" />
   <meta property="og:url" content="https://kiberlabs.github.io/" />
   <meta property="og:title" content="KiberLabs — AI &amp; Python B2B Automation Studio" />
-  <meta property="og:description" content="6 CI-verified Python 3.11+ open-source engines + benchmark suite, live browser sandboxes, 112-payload Red-Team benchmarks, Trust Center &amp; fixed-price SOW PDF generator." />
+  <meta property="og:description" content="8 CI-verified Python 3.11+ open-source engines, live browser sandboxes, 122-payload Red-Team benchmarks, Trust Center &amp; fixed-price SOW PDF generator." />
   <meta property="og:image" content="https://kiberlabs.github.io/assets/kiberlabs_logo_oficial.jpg" />
   <meta name="twitter:card" content="summary_large_image" />
   <meta name="twitter:title" content="KiberLabs — AI &amp; Python B2B Automation Studio" />
@@ -37,7 +37,8 @@
       "https://github.com/Kiberlabs/b2b-rag-citation-engine",
       "https://github.com/Kiberlabs/kiberlabs-automation-api",
       "https://github.com/Kiberlabs/b2b-invoice-reconciliation-engine",
-      "https://github.com/Kiberlabs/kiberlabs-benchmarks"
+      "https://github.com/Kiberlabs/kiberlabs-benchmarks",
+      "https://github.com/Kiberlabs/telegram-maintenance-rag-bot"
     ]
   }
   </script>
@@ -93,11 +94,11 @@
         </div>
         <div class="metrics-bar">
           <div class="metric-card">
-            <strong><a href="benchmarks.html" style="color:inherit;text-decoration:none;">7 / 7 CI</a></strong>
+            <strong><a href="benchmarks.html" style="color:inherit;text-decoration:none;">8 / 8 CI</a></strong>
             <span data-i18n="m_ci">GitHub Actions Passing (Py 3.11 &amp; 3.12)</span>
           </div>
           <div class="metric-card">
-            <strong>436 Tests</strong>
+            <strong>454+ Tests</strong>
             <span data-i18n="m_tests">Automated pytest &amp; Security Guards</span>
           </div>
           <div class="metric-card">
@@ -125,6 +126,7 @@
             <button id="btn-tab-rag" class="tab-btn" role="tab" aria-selected="false" aria-controls="tab-rag" tabindex="-1" data-tab="tab-rag" type="button" data-i18n="tab_rag">2. Grounded RAG Verifier</button>
             <button id="btn-tab-bot" class="tab-btn" role="tab" aria-selected="false" aria-controls="tab-bot" tabindex="-1" data-tab="tab-bot" type="button" data-i18n="tab_bot">3. 24/7 Lead Bot Simulator</button>
             <button id="btn-tab-invoice" class="tab-btn" role="tab" aria-selected="false" aria-controls="tab-invoice" tabindex="-1" data-tab="tab-invoice" type="button" data-i18n="tab_invoice">4. Invoice 3-Way &amp; IBAN Auditor</button>
+            <button id="btn-tab-maintenance" class="tab-btn" role="tab" aria-selected="false" aria-controls="tab-maintenance" tabindex="-1" data-tab="tab-maintenance" type="button" data-i18n="tab_maintenance">5. Maintenance RAG Bot</button>
           </div>
 
           <!-- TAB 1: Margin Sieve -->
@@ -247,6 +249,36 @@
               <pre id="inv-json" class="code-out" aria-live="polite"></pre>
             </div>
           </div>
+
+          <!-- TAB 5: Industrial Telegram Maintenance & Manual FTS5 RAG -->
+          <div id="tab-maintenance" class="tab-panel" role="tabpanel" aria-labelledby="btn-tab-maintenance" tabindex="0" hidden>
+            <div>
+              <div class="chip-row">
+                <button class="chip maint-preset" type="button" data-uid="1001" data-text="CNC-402 fault E-404 spindle overheat urgent">EN: CNC-402 E-404</button>
+                <button class="chip maint-preset" type="button" data-uid="1002" data-text="[ISO-9001] PUMP-104 fallo ERR-209 cavitación urgente">ES: PUMP-104 (ISO-9001)</button>
+                <button class="chip maint-preset" type="button" data-uid="1001" data-text="CNC-402 fault E-404 spindle overheat urgent">Replay Dedup (ID 1001)</button>
+                <button class="chip maint-preset" type="button" data-uid="1003" data-text="TURB-999 fault ERR-901 bearing vibration critical">Missing Manual (Abstain)</button>
+              </div>
+              <form id="maint-form" class="form-grid">
+                <div class="field">
+                  <label for="maint-uid" data-i18n="lbl_maint_uid">Telegram update_id (64-bit Dedup)</label>
+                  <input id="maint-uid" type="number" min="0" value="1001" />
+                </div>
+                <div class="field full">
+                  <label for="maint-text" data-i18n="lbl_maint_text">Telegram Field Log (EN / ES)</label>
+                  <input id="maint-text" type="text" value="CNC-402 fault E-404 spindle overheat urgent" />
+                </div>
+              </form>
+              <div style="margin-top: 12px; display: flex; flex-wrap: wrap; gap: 10px;">
+                <button id="maint-run" class="btn btn-primary" type="button" data-i18n="btn_maint_run">Process Update &amp; Ground</button>
+                <button id="maint-reset" class="btn btn-secondary" type="button" data-i18n="btn_reset">Reset</button>
+              </div>
+            </div>
+            <div class="output-pane">
+              <span id="maint-badge" class="status-badge status-ok" aria-live="polite">GROUNDED</span>
+              <pre id="maint-json" class="code-out" aria-live="polite"></pre>
+            </div>
+          </div>
         </div>
       </div>
     </section>
@@ -254,7 +286,7 @@
     <section id="portfolio">
       <div class="container">
         <div class="section-head">
-          <h2 data-i18n="pf_title">6 Open-Source Production Reference Engines</h2>
+          <h2 data-i18n="pf_title">8 Open-Source Production Reference Engines</h2>
           <p data-i18n="pf_desc">Every repository runs live GitHub Actions CI across Python 3.11 &amp; 3.12 with deterministic pytest coverage.</p>
         </div>
 
@@ -336,6 +368,32 @@
               <a href="https://github.com/Kiberlabs/b2b-invoice-reconciliation-engine" target="_blank" rel="noopener">github.com/Kiberlabs/b2b-invoice-reconciliation-engine →</a>
             </div>
           </article>
+
+          <article class="repo-card">
+            <img class="cover" src="assets/cover_07_benchmarks.jpg" alt="KiberLabs Benchmarks and Red-Team Suite" width="896" height="500" loading="lazy" />
+            <div class="repo-body">
+              <div class="repo-top">
+                <h3>07 · Performance &amp; Red-Team Suite</h3>
+                <img src="https://github.com/Kiberlabs/kiberlabs-benchmarks/actions/workflows/ci.yml/badge.svg" alt="CI status for kiberlabs-benchmarks" width="104" height="20" />
+              </div>
+              <p data-i18n="r7_desc">Zero-dependency benchmark harness measuring nanosecond p50/p95/p99 latency, 50-thread &amp; 16-thread SQLite WAL concurrency, and 122 Red-Team security payloads.</p>
+              <div class="tags"><span class="tag">perf_counter_ns</span><span class="tag">SQLite WAL</span><span class="tag">122 Red-Team</span><span class="tag">0 Lock Errors</span></div>
+              <a href="https://github.com/Kiberlabs/kiberlabs-benchmarks" target="_blank" rel="noopener">github.com/Kiberlabs/kiberlabs-benchmarks →</a>
+            </div>
+          </article>
+
+          <article class="repo-card">
+            <img class="cover" src="assets/cover_08_maintenance_rag.jpg" alt="Telegram Maintenance RAG Bot" width="896" height="500" loading="lazy" />
+            <div class="repo-body">
+              <div class="repo-top">
+                <h3>08 · Telegram Maintenance RAG Bot</h3>
+                <img src="https://github.com/Kiberlabs/telegram-maintenance-rag-bot/actions/workflows/ci.yml/badge.svg" alt="CI status for telegram-maintenance-rag-bot" width="104" height="20" />
+              </div>
+              <p data-i18n="r8_desc">Industrial Telegram intake with atomic 64-bit update_id WAL dedup, bilingual EN/ES fault &amp; equipment extraction, FTS5 manuals, and [manual_id#section] citations.</p>
+              <div class="tags"><span class="tag">Telegram Bot</span><span class="tag">64-bit Dedup</span><span class="tag">FTS5 Manuals</span><span class="tag">EN/ES NLU</span></div>
+              <a href="https://github.com/Kiberlabs/telegram-maintenance-rag-bot" target="_blank" rel="noopener">github.com/Kiberlabs/telegram-maintenance-rag-bot →</a>
+            </div>
+          </article>
         </div>
       </div>
     </section>
@@ -357,6 +415,7 @@
                 <option value="rag" data-i18n="opt_track_rag">Zero-Hallucination B2B RAG &amp; Citation Engine</option>
                 <option value="api" selected data-i18n="opt_track_api">Production FastAPI + Auth + Docker Gateway</option>
                 <option value="invoice" data-i18n="opt_track_invoice">B2B 3-Way Invoice Reconciliation &amp; Hash Ledger</option>
+                <option value="maintenance_rag" data-i18n="opt_track_maintenance">Telegram Maintenance &amp; Manual FTS5 RAG Bot</option>
               </select>
             </div>
             <div class="field full">

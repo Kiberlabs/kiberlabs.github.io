@@ -7,6 +7,7 @@ import {
   convertUsdToCurrency,
   estimateFixedPriceScope,
   evaluateInvoice3Way,
+  evaluateMaintenanceRag,
   evaluateMarginSieve,
   normalizeCurrency,
   runGroundedRagQuery,
@@ -39,6 +40,10 @@ const I18N = {
     tab_rag: "2. Grounded RAG Verifier",
     tab_bot: "3. 24/7 Lead Bot Simulator",
     tab_invoice: "4. Invoice 3-Way & IBAN Auditor",
+    tab_maintenance: "5. Maintenance RAG Bot",
+    lbl_maint_uid: "Telegram update_id (64-bit Dedup)",
+    lbl_maint_text: "Telegram Field Log (EN / ES)",
+    btn_maint_run: "Process Update & Ground",
     lbl_po: "Purchase Order Total (EUR)",
     lbl_grn: "Goods Receipt (GRN) Total (EUR)",
     lbl_inv_total: "Billed Invoice Total (EUR)",
@@ -57,7 +62,7 @@ const I18N = {
     btn_rag: "Verify Citations",
     btn_send: "Send",
     btn_reset: "Reset",
-    pf_title: "6 Open-Source Production Reference Engines",
+    pf_title: "8 Open-Source Production Reference Engines",
     pf_desc: "Every repository runs live GitHub Actions CI across Python 3.11 & 3.12 with deterministic pytest coverage.",
     r1_desc: "Zero-token 3-stage supplier catalog filter, net-margin calculator, SSRF URL guard, and SQLite WAL price-drop alerts.",
     r2_desc: "Bilingual ES/EN zero-token NLU, adaptive lead qualification state machine, spam blocking, and atomic webhook idempotency.",
@@ -65,6 +70,8 @@ const I18N = {
     r4_desc: "Article-aware legal/policy chunking with SHA-256 hashes, SQLite FTS5 BM25 bilingual search, and zero-hallucination abstention.",
     r5_desc: "Production REST gateway unifying Sieve, Lead Webhooks, and RAG behind HMAC X-API-Key auth, sliding-window rate limits, and Docker.",
     r6_desc: "Multi-format invoice parser (JSON, UBL/Facturae XML, OCR), 3-way PO/GRN match with 0-100 risk score, IBAN MOD-97, and a SHA-256 hash-chained tamper-evident ledger.",
+    r7_desc: "Zero-dependency benchmark harness measuring nanosecond p50/p95/p99 latency, 50-thread & 16-thread SQLite WAL concurrency, and 122 Red-Team security payloads.",
+    r8_desc: "Industrial Telegram intake with atomic 64-bit update_id WAL dedup, bilingual EN/ES fault & equipment extraction, FTS5 manuals, and [manual_id#section] citations.",
     est_title: "Fixed-Price Milestone Scope Estimator",
     est_desc: "Configure your target deliverable to preview transparent fixed-price milestones and copy a ready-to-send brief.",
     lbl_track: "Automation Track",
@@ -84,6 +91,7 @@ const I18N = {
     opt_track_rag: "Zero-Hallucination B2B RAG & Citation Engine",
     opt_track_api: "Production FastAPI + Auth + Docker Gateway",
     opt_track_invoice: "B2B 3-Way Invoice Reconciliation & Hash Ledger",
+    opt_track_maintenance: "Telegram Maintenance & Manual FTS5 RAG Bot",
     opt_tier_mvp: "Fast MVP CLI / Core Module (2–5 days)",
     opt_tier_prod: "Production Ready + DB + Webhooks",
     opt_tier_ent: "Multi-Source / Custom Integrations",
@@ -116,6 +124,10 @@ const I18N = {
     tab_rag: "2. Verificador RAG",
     tab_bot: "3. Simulador Bot 24/7",
     tab_invoice: "4. Auditoría Facturas 3-Vías e IBAN",
+    tab_maintenance: "5. Bot Mantenimiento RAG",
+    lbl_maint_uid: "Telegram update_id (Dedup 64-bit)",
+    lbl_maint_text: "Parte de Campo Telegram (ES / EN)",
+    btn_maint_run: "Procesar Parte y Citar",
     lbl_po: "Total Pedido Compra / PO (EUR)",
     lbl_grn: "Total Albarán / GRN (EUR)",
     lbl_inv_total: "Total Factura Emitida (EUR)",
@@ -134,7 +146,7 @@ const I18N = {
     btn_rag: "Verificar Citas",
     btn_send: "Enviar",
     btn_reset: "Reiniciar",
-    pf_title: "6 Motores Open-Source de Referencia en Producción",
+    pf_title: "8 Motores Open-Source de Referencia en Producción",
     pf_desc: "Cada repositorio ejecuta GitHub Actions CI real en Python 3.11 y 3.12 con cobertura automatizada en pytest.",
     r1_desc: "Filtro de catálogo en 3 etapas sin tokens, cálculo de margen neto, guarda anti-SSRF y alertas de bajada de precio en SQLite WAL.",
     r2_desc: "NLU bilingüe ES/EN sin tokens, máquina de estados de cualificación de leads, filtro anti-spam e idempotencia atómica de webhooks.",
@@ -142,6 +154,8 @@ const I18N = {
     r4_desc: "Segmentación legal por Artículos con hashes SHA-256, búsqueda BM25 en SQLite FTS5 y abstención anti-alucinaciones.",
     r5_desc: "Gateway REST en producción unificando Sieve, Webhooks y RAG con auth HMAC X-API-Key, rate limiting y Docker multi-stage.",
     r6_desc: "Parser de facturas multiformato (JSON, XML UBL/Facturae, OCR), conciliación 3 vías PO/GRN con score de riesgo 0-100, IBAN MOD-97 y ledger inmutable con cadena de hashes SHA-256.",
+    r7_desc: "Suite de benchmarks sin dependencias que mide latencia p50/p95/p99 en nanosegundos, concurrencia SQLite WAL a 50 y 16 hilos, y 122 payloads Red-Team.",
+    r8_desc: "Ingesta industrial por Telegram con dedup atómica update_id de 64 bits en WAL, extracción ES/EN de fallos y equipos, manuales FTS5 y citas [manual_id#section].",
     est_title: "Calculadora de Hitos a Precio Cerrado",
     est_desc: "Configura tu entregable para estimar hitos transparentes y copiar un resumen técnico listo para enviar.",
     lbl_track: "Línea de Automatización",
@@ -161,6 +175,7 @@ const I18N = {
     opt_track_rag: "Motor RAG B2B Sin Alucinaciones con Citas",
     opt_track_api: "Gateway FastAPI en Producción + Auth + Docker",
     opt_track_invoice: "Conciliación de Facturas 3-Vías y Ledger Hash",
+    opt_track_maintenance: "Bot Telegram de Mantenimiento y RAG FTS5",
     opt_tier_mvp: "MVP Rápido CLI / Módulo Core (2–5 días)",
     opt_tier_prod: "Listo para Producción + DB + Webhooks",
     opt_tier_ent: "Multifuente / Integraciones a Medida",
@@ -190,6 +205,8 @@ let currentLang = safeGetLang();
 let isBooted = false;
 let botSession = { lang: currentLang, state: "new", service_need: null, estimated_budget_eur: null };
 let lastBotIntent = "init";
+let seenMaintUpdateIds = new Set();
+let lastMaintResult = null;
 
 function applyLang(lang) {
   currentLang = lang;
@@ -224,6 +241,7 @@ function applyLang(lang) {
     updateRag();
     renderBotState(lastBotIntent);
     updateInvoice();
+    if (lastMaintResult) renderMaintenanceResult(lastMaintResult);
     updateEstimator();
   }
 }
@@ -414,7 +432,62 @@ document.querySelectorAll(".inv-preset").forEach((btn) => {
   });
 });
 
-/* 5. Estimator */
+/* 5. Industrial Telegram Maintenance & Manual FTS5 RAG */
+function renderMaintenanceResult(res) {
+  lastMaintResult = res;
+  const badge = document.getElementById("maint-badge");
+  if (res.deduplicated) {
+    badge.textContent = currentLang === "es"
+      ? `DUPLICADO BLOQUEADO · ID ${res.update_id}`
+      : `DUPLICATE BLOCKED · ID ${res.update_id}`;
+    badge.className = "status-badge status-warn";
+  } else if (res.refused) {
+    badge.textContent = currentLang === "es"
+      ? "EVIDENCIA_INSUFICIENTE · ABSTENCIÓN"
+      : "INSUFFICIENT_EVIDENCE · ABSTAINED";
+    badge.className = "status-badge status-bad";
+  } else {
+    badge.textContent = currentLang === "es"
+      ? `VERIFICADO · ${res.citations.length} CITA(S)`
+      : `GROUNDED · ${res.citations.length} CITATION(S)`;
+    badge.className = "status-badge status-ok";
+  }
+  document.getElementById("maint-json").textContent = JSON.stringify(res, null, 2);
+}
+
+function runMaintenanceSim() {
+  const uidVal = document.getElementById("maint-uid").value;
+  const textVal = document.getElementById("maint-text").value;
+  const res = evaluateMaintenanceRag({
+    updateId: uidVal === "" ? NaN : Number(uidVal),
+    text: textVal,
+    seenUpdateIds: seenMaintUpdateIds,
+  });
+  renderMaintenanceResult(res);
+}
+
+document.getElementById("maint-run").addEventListener("click", runMaintenanceSim);
+document.getElementById("maint-text").addEventListener("keydown", (e) => {
+  if (e.key === "Enter") {
+    e.preventDefault();
+    runMaintenanceSim();
+  }
+});
+document.getElementById("maint-reset").addEventListener("click", () => {
+  seenMaintUpdateIds = new Set();
+  document.getElementById("maint-uid").value = "1001";
+  document.getElementById("maint-text").value = "CNC-402 fault E-404 spindle overheat urgent";
+  runMaintenanceSim();
+});
+document.querySelectorAll(".maint-preset").forEach((btn) => {
+  btn.addEventListener("click", () => {
+    document.getElementById("maint-uid").value = btn.dataset.uid;
+    document.getElementById("maint-text").value = btn.dataset.text;
+    runMaintenanceSim();
+  });
+});
+
+/* 6. Estimator */
 let lastEstimate = null;
 function formatEstMoney(amount, currency = "USD") {
   const curr = normalizeCurrency(currency);
@@ -510,5 +583,6 @@ updateSieve();
 updateRag();
 renderBotState("init");
 updateInvoice();
+runMaintenanceSim();
 updateEstimator();
 isBooted = true;

@@ -129,7 +129,7 @@
             <ul class="adr-points">
               <li><strong data-i18n="adr_ctx">Context:</strong> <span data-i18n="adr3_ctx">Internet-facing scrapers, file processors, and FastAPI webhooks are prime targets for SSRF metadata theft, path traversal, and webhook replay floods.</span></li>
               <li><strong data-i18n="adr_dec">Decision:</strong> <span data-i18n="adr3_dec">Ship multi-stage non-root Docker images backed by constant-time HMAC <code>X-API-Key</code> auth, sliding-window rate limits, private/metadata IP rejection, and atomic replay deduplication.</span></li>
-              <li><strong data-i18n="adr_ver">Verification:</strong> <span data-i18n="adr3_ver">100% block rate across 112 real Red-Team payloads in automated CI.</span></li>
+              <li><strong data-i18n="adr_ver">Verification:</strong> <span data-i18n="adr3_ver">100% block rate across 122 real Red-Team payloads in automated CI.</span></li>
             </ul>
           </article>
 

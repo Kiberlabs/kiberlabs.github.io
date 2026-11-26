@@ -371,6 +371,24 @@ section {
   display: none;
 }
 
+.tab-panel > *,
+.estimator-grid > *,
+.form-grid > *,
+.field,
+.sow-layout > *,
+.sow-editor,
+.sow-sheet,
+.sow-meta-grid > *,
+.repo-grid > *,
+.cards-grid-2 > *,
+.ms-row > *,
+.output-pane,
+.repo-card,
+.repo-body {
+  min-width: 0;
+  overflow-wrap: anywhere;
+}
+
 .tab-panel.active {
   display: grid;
   grid-template-columns: 1.05fr 1fr;
@@ -402,6 +420,10 @@ section {
 .field input,
 .field select,
 .field textarea {
+  width: 100%;
+  max-width: 100%;
+  min-width: 0;
+  box-sizing: border-box;
   background: var(--bg);
   color: #fff;
   border: 1px solid var(--border);
@@ -489,12 +511,14 @@ section {
 pre.code-out {
   margin: 0;
   padding: 12px;
+  max-width: 100%;
   border-radius: 10px;
   background: rgba(15, 23, 42, 0.85);
   color: #cbd5e1;
   font-family: var(--font-mono);
   font-size: 0.8rem;
   overflow-x: auto;
+  overflow-wrap: anywhere;
   white-space: pre-wrap;
 }
 
@@ -560,6 +584,7 @@ pre.code-out {
 
 .chat-input-row input {
   flex: 1;
+  min-width: 0;
   background: var(--bg);
   color: #fff;
   border: 1px solid var(--border);
@@ -570,7 +595,7 @@ pre.code-out {
 /* Portfolio Cards */
 .repo-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(310px, 1fr));
+  grid-template-columns: repeat(auto-fit, minmax(min(100%, 310px), 1fr));
   gap: 18px;
 }
 
@@ -714,7 +739,7 @@ footer {
 
 .cards-grid-2 {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
+  grid-template-columns: repeat(auto-fit, minmax(min(100%, 320px), 1fr));
   gap: 18px;
 }
 
@@ -1069,6 +1094,33 @@ footer {
   }
 }
 
+@media (max-width: 600px) {
+  .sow-meta-grid,
+  .sow-sigs {
+    grid-template-columns: 1fr;
+  }
+  .sow-sheet {
+    padding: 20px 16px;
+  }
+  .sow-sheet-head {
+    flex-wrap: wrap;
+  }
+  .sow-table {
+    display: block;
+    overflow-x: auto;
+    max-width: 100%;
+  }
+  .sow-table th,
+  .sow-table td {
+    padding: 6px 8px;
+    font-size: 0.78rem;
+  }
+  .estimator-grid,
+  .sow-editor {
+    padding: 16px;
+  }
+}
+
 @media (prefers-reduced-motion: reduce) {
   html {
     scroll-behavior: auto;
@@ -1095,10 +1147,76 @@ footer {
     background: #ffffff !important;
     color: #0f172a !important;
   }
+  .metric-card,
+  .panel-card,
+  .bench-card,
+  .trust-card,
+  .adr-card,
+  .repo-card,
+  .latency-pills span,
+  .sandbox-shell,
+  .tabs-bar,
+  .output-pane,
+  .estimator-grid,
+  .milestone-list li,
+  .table-wrap,
+  .data-table,
+  .data-table td {
+    background: #ffffff !important;
+    border-color: #cbd5e1 !important;
+    color: #0f172a !important;
+    box-shadow: none !important;
+  }
+  .data-table th {
+    background: #f8fafc !important;
+    color: #334155 !important;
+    border-color: #cbd5e1 !important;
+  }
+  .data-table .status-badge,
+  .status-badge {
+    background: #ecfdf5 !important;
+    color: #065f46 !important;
+    border-color: #6ee7b7 !important;
+  }
   .metric-card strong,
   .latency-pills strong,
-  .trust-card h3 {
+  .trust-card h3,
+  .adr-card h3,
+  .repo-card h3,
+  .adr-points strong,
+  h1,
+  h2,
+  h3 {
     color: #0f172a !important;
+  }
+  .gradient-text {
+    background: none !important;
+    -webkit-text-fill-color: #0f172a !important;
+    color: #0f172a !important;
+  }
+  .hero p.lead,
+  .subhero p.lead,
+  .section-head p,
+  .metric-card span,
+  .trust-card p,
+  .adr-points,
+  .repo-card p,
+  .latency-pills,
+  .field label,
+  .muted {
+    color: #334155 !important;
+  }
+  .bench-ops,
+  .price-big,
+  .status-ok {
+    color: #065f46 !important;
+  }
+  .pill,
+  .repo-body a,
+  .tag {
+    color: #0369a1 !important;
+    background: #f8fafc !important;
+    border-color: #cbd5e1 !important;
   }
   pre.code-out {
     background: #f8fafc !important;
